@@ -1,15 +1,12 @@
 import argparse
-from decimal import Decimal
 from typing import Sequence
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
 
-from balance_tracker import balances
 
-
-def read_data(path="portfolio.csv", sample_interval: str = "5min") -> pd.Series:
+def read_data(path, sample_interval: str = "5min") -> pd.Series:
     df = pd.read_csv(
         filepath_or_buffer=path,
         header=None,
@@ -22,65 +19,9 @@ def read_data(path="portfolio.csv", sample_interval: str = "5min") -> pd.Series:
     return df
 
 
-def read_token_balances(path):
-    all_balances = balances.read_all_balances(path)
-
-    # covalent.Chains.__members__
-
-    # Get all unique contracts
-    cas: set[str] = set()
-    for s in map(lambda b: set(b["token_balances"].keys()), all_balances):
-        cas |= s
-
-    # Get balance data
-    bal_data: list[dict[str, Decimal]] = []
-    for bal in map(lambda b: b["token_balances"], all_balances):
-        record: dict[str, Decimal] = {}
-        for ca, token_info in bal.items():
-            record[ca] = token_info["balance"]
-        bal_data.append(record)
-
-    # Get value data
-    val_data: list[dict[str, Decimal]] = []
-    for bal in map(lambda b: b["token_balances"], all_balances):
-        record: dict[str, Decimal] = {}
-        for ca, token_info in bal.items():
-            record[ca] = token_info["value"]
-        val_data.append(record)
-
-    # Make a ts-based index
-    # idx = pd.DatetimeIndex(
-    #     data=map(
-    #         lambda b: pd.to_datetime(
-    #             b["timestamp"],
-    #             unit="s",
-    #         ),
-    #         all_balances,
-    #     ),
-    # )
-
-    # bal_df = pd.DataFrame(columns=list(cas), index=idx, data=bal_data).fillna(0)  # type: ignore
-    # val_df = pd.DataFrame(columns=list(cas), index=idx, data=val_data).fillna(0)  # type: ignore
-    # Create filters for trades, withdrawals and deposits
-    # increase = (bal_df.astype(float).diff() < 0).sum(axis=1) > 0
-    # decrease = (bal_df.astype(float).diff() > 0).sum(axis=1) > 0
-
-    # TODO: make sure to filter out deposit and withdrawal pnl change
-    # TODO: need to suppport aptos and pump.fun for more in-depth analysis
-    # trades = increase & decrease
-    # deposits = increase & ~decrease
-    # withdrawals = ~increase & decrease
-
-    # val_df["total"] = val_df.sum(axis=1)
-
-
 def calc_returns(data: pd.Series) -> pd.Series:
     data = 100 * (data - data.iloc[0]) / data.iloc[0]
     return data
-
-
-def calc_sharpe(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
-    return (returns.sum() - risk_free_rate) / (returns - risk_free_rate).std()
 
 
 def plot_data(

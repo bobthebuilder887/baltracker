@@ -9,15 +9,14 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Literal, Sequence
 
-import pandas as pd
 import requests
 import rich
 
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
 
-# TODO: replace with config.ini
 from balance_tracker.config import Config
 
+# TODO: add support for PF tokens (Dexscreener does not have prices)
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -27,17 +26,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-# TODO: add logs following this tutorial and have them be sent in a tg channel
-# - https://github.com/mCodingLLC/VideosSampleCode/tree/master/videos/135_modern_logging
-# - have them be sent in a tg channel and .jsonl
-# - need to have a verbose option where it prints it in classic form
-# TODO: redo the token balances table to be easier to work with
-# TODO: add support for PF tokens (Dexscreener does not have prices)
-# TODO: find a more reliable apt balance tracking api
-# TODO: add fees to balance calculation
-# TODO: add chain the token belongs to
-# TODO: add general methodology for tracking performance along different axis
 
 
 def mcap_str(mcap: Decimal) -> str:
@@ -193,7 +181,8 @@ def track_balances(cfg: Config) -> None:
         info.market_cap = previous_balance.get(address, info).market_cap
 
     if PORTFOLIO_PATH.exists():
-        portfolio_prev_usd = Decimal(pd.read_csv(PORTFOLIO_PATH).iloc[-1, 1])
+        with open(PORTFOLIO_PATH) as f:
+            portfolio_prev_usd = Decimal(f.readlines()[-1].strip().split(", ")[-1])
     else:
         portfolio_prev_usd = Decimal(0)
 
@@ -208,6 +197,9 @@ def track_balances(cfg: Config) -> None:
         emoji = "🟡"
     else:
         emoji = "🟢"
+
+    ts_str = datetime.datetime.fromtimestamp(TIME_S).strftime("%Y-%m-%d %H:%M")
+    ts_str = f"--- Portfolio Update | {ts_str} ---"
     portfolio_str = f"{emoji} ${portfolio_usd:,.2f} ({sign}{portfolio_chg:,.2f} ({portfolio_chg_pct:.2f}%))"
 
     all_contracts = set(previous_balance.keys()).union(set(balance_update.keys()))
@@ -233,6 +225,7 @@ def track_balances(cfg: Config) -> None:
 
     # Print message
     if cfg.general.verbose:
+        rich.print(ts_str)
         rich.print("\n".join(msg))
         rich.print("-" * len(portfolio_str))
         rich.print(portfolio_str)
@@ -244,6 +237,7 @@ def track_balances(cfg: Config) -> None:
             args=(
                 "\n".join(
                     (
+                        ts_str,
                         "\n".join(msg),
                         "-" * len(portfolio_str),
                         portfolio_str,
