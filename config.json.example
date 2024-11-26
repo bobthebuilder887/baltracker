@@ -1,0 +1,45 @@
+{
+  "general": {
+    "verbose": false, 
+    "min_value_usd": 1,
+    "time_interval": 600,
+    "data_path": ".data"
+  },
+  "keys": {
+    "sui_api_key": "your_key", 
+    "moralis_api_key": "your_key"},
+  "telegram": {
+    "bot_token": "your_token", 
+    "chat_id": 000000, 
+    "send_msg": true
+  },
+  "solana_wallets": {
+    "your_wallet": {"name": "sol_main", "strategy": "long-term"},
+  },
+  "evm_wallets": {
+    "your_wallet": {"name": "evm_main", "strategy": "long-term"},
+
+  },
+  "sui_wallets": {
+    "your_wallet": {"name": "sui_main", "strategy": "long-term"}
+  },
+  "evm_info": {
+    "eth": {
+      "gecko_ticker": "ethereum",
+      "ticker": "ETH",
+      "moralis": "eth"
+    },
+    "base": {
+      "gecko_ticker": "ethereum",
+      "ticker": "ETH",
+      "moralis": "base"
+    },
+    "polygon": {
+      "gecko_ticker": "matic-network",
+      "ticker": "MATIC",
+      "moralis": "polygon"
+    }},
+  "unsupported_balances": {
+    "token_contract": ["your_amt", "your_amt2"],
+  }
+}
