@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-cd /home/user_name/tgbot
+cd /home/user_name/baltracker
 source ./.venv/bin/activate
 track
 deactivate
