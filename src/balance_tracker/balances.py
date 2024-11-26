@@ -216,7 +216,7 @@ def track_balances(cfg: Config) -> None:
 
         updates.append(update)
 
-    updates = sorted(updates, key=lambda x: x.new.real_value, reverse=True)
+    updates = sorted(updates, key=lambda x: (x.chain, x.new.real_value), reverse=True)
 
     msg = []
     for update in updates:
