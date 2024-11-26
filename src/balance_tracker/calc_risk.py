@@ -1,12 +1,11 @@
-def usd_to_crypto(usd, price):
-    return usd / price
-
-
-def risk_estimate(pr_win: float, frac_loss: float, frac_gain: float, frac: float = 0.5):
+def risk_estimate(pr_win, frac_loss, frac_gain, frac):
+    """
+    Risk estimate using frraction of the Kelly criterion
+    """
     return frac * kelly_criterion_bin(pr_win, frac_loss, frac_gain)
 
 
-def kelly_criterion_bin(pr_win: float, frac_loss: float, frac_gain: float) -> float:
+def kelly_criterion_bin(pr_win, frac_loss, frac_gain):
     """Binary outcomes"""
     pr_loss = 1 - pr_win
     fraction = pr_win / frac_loss - pr_loss / frac_gain
