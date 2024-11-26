@@ -6,7 +6,8 @@ Tools for tracking crypto wallet balances
 
 - Python3.12
 - Telegram Bot API key.
-- Moralis API keys
+- Moralis API keys for SOL and EVM wallets
+- Blockberry API key for SUI wallets
 
 ## Install
 
