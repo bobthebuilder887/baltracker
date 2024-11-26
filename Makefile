@@ -15,12 +15,12 @@ CFG_FILE := config.json
 install:
 	${PY} -m venv ${ENV_DIR};
 	${PIP} install --upgrade pip;
-	${PIP} install  .
+	${PIP} install  '.[plot]'
 
 install_dev:
 	${PY} -m venv ${ENV_DIR};
 	${PIP} install --upgrade pip;
-	${PIP} install -e '.[dev]'
+	${PIP} install -e '.[optional-dependencies]'
 
 lint:
 	${RUFF} format ${PROJECT_DIR}/*.py && ${ISORT} ${PROJECT_DIR}/*.py
