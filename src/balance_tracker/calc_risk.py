@@ -1,6 +1,6 @@
 def risk_estimate(pr_win, frac_loss, frac_gain, frac):
     """
-    Risk estimate using frraction of the Kelly criterion
+    Risk estimate using fraction of the Kelly criterion
     """
     return frac * kelly_criterion_bin(pr_win, frac_loss, frac_gain)
 
