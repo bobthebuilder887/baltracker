@@ -13,7 +13,6 @@ import requests
 import rich
 
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
-
 from balance_tracker.config import Config
 
 # TODO: add support for PF tokens (Dexscreener does not have prices)
