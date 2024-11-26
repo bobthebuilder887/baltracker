@@ -11,6 +11,7 @@ RUFF := ./$(ENV_DIR)/bin/ruff
 ISORT := ./$(ENV_DIR)/bin/isort
 LOCAL := ~/Projects/$(PROJECT_NAME)
 CFG_FILE := config.json
+DATA_DIR := .data
 
 install:
 	${PY} -m venv ${ENV_DIR};
@@ -36,7 +37,7 @@ get_log:
 	scp -i ${KEY} ${REMOTE}:~/${PROJECT_NAME}/${PROJECT_NAME}.log ${LOCAL}
 
 get_data:
-	scp -i ${KEY} -r ${REMOTE}:~/${PROJECT_NAME}/.data ${LOCAL}/.data
+	scp -i ${KEY} -r ${REMOTE}:~/${PROJECT_NAME}/${DATA_DIR} ${LOCAL}/${DATA_DIR}
 
 upload_data:
 	scp -i ${KEY} -r .data ${REMOTE}:~/${PROJECT_NAME}
