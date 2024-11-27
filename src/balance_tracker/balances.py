@@ -45,7 +45,7 @@ def mcap_str(mcap: Decimal) -> str:
     else:
         div = 1000_000_000_000
         s = "T"
-    return f"{round(mcap / div, 1):,.2f}{s}"
+    return f"{mcap / div, 1:,.1f}{s}"
 
 
 @dataclasses.dataclass
