@@ -16,6 +16,7 @@ from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
 from balance_tracker.config import Config
 
 # TODO: add support for PF tokens (Dexscreener does not have prices)
+# TODO: add better http error handling
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -300,11 +301,21 @@ def main(argv: Sequence[str] | None = None) -> None:
                 cfg.general.verbose = args.verbose if args.verbose else cfg.general.verbose
                 track_balances(cfg)
                 time.sleep(INTERVAL_S)
+            # Network error handling
             except requests.HTTPError as e:
                 logger.error(e, exc_info=True)
+                if e.response.status_code == 401:
+                    logger.fatal("Forbidden - API ")
+                    raise
+                elif e.response.status_code == 429:
+                    if "moralis" in e.response.url:
+                        logger.fatal("Ran out of limits for Moralis")
+                        raise
+                else:
+                    pass
+
                 logger.warning(f"Network error, trying again in {RETRY_S}")
                 time.sleep(RETRY_S)
-
     except Exception as e:
         logger.error(e, exc_info=True)
     except KeyboardInterrupt:
