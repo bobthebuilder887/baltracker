@@ -32,15 +32,20 @@ def mcap_str(mcap: Decimal) -> str:
     """Convert mcap into a readable string format, i.e. 1,600,000,000 -> 1.6B"""
     if mcap < 1000:
         div = 1
+        s = ""
     elif mcap < 1000_000:
         div = 1000
+        s = "K"
     elif mcap < 1000_000_000:
         div = 1000_000
+        s = "M"
     elif mcap < 1000_000_000_000:
         div = 1000_000_000
+        s = "B"
     else:
         div = 1000_000_000_000
-    return f"{round(mcap / div, 1):,.2f}"
+        s = "T"
+    return f"{round(mcap / div, 1):,.2f}{s}"
 
 
 @dataclasses.dataclass
@@ -115,7 +120,7 @@ class BalanceUpdate:
         else:
             chg_str = ""
 
-        return chain, f"{emoji} {symbol}{mcap} | {value}{chg_str}"
+        return chain, f"{emoji} {symbol} {mcap} | {value}{chg_str}"
 
 
 def send_tg_msg(msg: str, bot_token: str, chat_id: str):
