@@ -82,7 +82,7 @@ class BalanceUpdate:
                 )
                 self.price_change_pct = 100 * (self.new.price - self.old.price) / self.old.price
 
-    def line_str(self) -> str:
+    def line_str(self) -> tuple[str, str]:
         if not self.new:
             return ""
 
@@ -113,7 +113,7 @@ class BalanceUpdate:
         else:
             chg_str = ""
 
-        return f"{emoji} {symbol} ({mcap}/{chain}) | {value}{chg_str}"
+        return chain, f"{emoji} {symbol} ({mcap}) | {value}{chg_str}"
 
 
 def send_tg_msg(msg: str, bot_token: str, chat_id: str):
@@ -221,7 +221,11 @@ def track_balances(cfg: Config) -> None:
 
     msg = []
     for update in updates:
-        msg.append(update.line_str())
+        chain, line_str = update.line_str()
+        chain_str = f"-------- {chain}:"
+        if chain_str not in msg:
+            msg.append(chain_str)
+        msg.append(line_str)
 
     # Print message
     if cfg.general.verbose:
