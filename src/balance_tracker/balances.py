@@ -31,15 +31,16 @@ logger = logging.getLogger(__name__)
 def mcap_str(mcap: Decimal) -> str:
     """Convert mcap into a readable string format, i.e. 1,600,000,000 -> 1.6B"""
     if mcap < 1000:
-        return f"{mcap}"
+        div = 1
     elif mcap < 1000_000:
-        return f"{mcap / 1000:.2f}K"
+        div = 1000
     elif mcap < 1000_000_000:
-        return f"{mcap / 1000000:.2f}M"
+        div = 1000_000
     elif mcap < 1000_000_000_000:
-        return f"{mcap / 1000000000:.2f}B"
+        div = 1000_000_000
     else:
-        return f"{mcap / 1000_000_000_000:.2f}T"
+        div = 1000_000_000_000
+    return f"{round(mcap / div, 1):,.2f}"
 
 
 @dataclasses.dataclass
@@ -102,7 +103,8 @@ class BalanceUpdate:
 
         # Keep the symbol a certain size
         symbol = self.new.symbol if len(self.new.symbol) < 13 else f"{self.new.symbol[:10]}..."
-        mcap = mcap_str(self.new.market_cap)
+        mcap_fmt = mcap_str(self.new.market_cap)
+        mcap = f"({mcap_fmt})" if self.new.market_cap != 0 else ""
         chain = self.new.chain
         value = f"${self.new.real_value:,.2f}"
 
@@ -113,7 +115,7 @@ class BalanceUpdate:
         else:
             chg_str = ""
 
-        return chain, f"{emoji} {symbol} ({mcap}) | {value}{chg_str}"
+        return chain, f"{emoji} {symbol}{mcap} | {value}{chg_str}"
 
 
 def send_tg_msg(msg: str, bot_token: str, chat_id: str):
