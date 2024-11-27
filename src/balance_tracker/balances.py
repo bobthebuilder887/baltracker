@@ -95,6 +95,7 @@ class BalanceUpdate:
             emoji = "🔴"
         elif self.value_change_pct == 100:
             emoji = "🟣"
+
         elif self.price_change_pct == 0:
             emoji = "🟡"
         else:
@@ -257,9 +258,9 @@ def track_balances(cfg: Config) -> None:
                 str(cfg.telegram.chat_id),
             ),
         )
-        msg_thread.start()
     else:
         msg_thread = threading.Thread(target=time.sleep, args=(1,))
+    msg_thread.start()
 
     # Save balances
     save_balances(balance_update, TOKEN_BAL_PATH)
@@ -313,6 +314,16 @@ def main(argv: Sequence[str] | None = None) -> None:
                 time.sleep(INTERVAL_S)
             # Network error handling
             except requests.HTTPError as e:
+                msg_thread = threading.Thread(
+                    target=send_tg_msg,
+                    args=(
+                        str(e),
+                        cfg.telegram.bot_token,
+                        str(cfg.telegram.chat_id),
+                    ),
+                )
+                msg_thread.start()
+
                 logger.error(e, exc_info=True)
                 if e.response.status_code == 401:
                     logger.fatal("Forbidden - API ")
@@ -325,9 +336,15 @@ def main(argv: Sequence[str] | None = None) -> None:
                     pass
 
                 logger.warning(f"Network error, trying again in {RETRY_S}")
+                msg_thread.join()
                 time.sleep(RETRY_S)
     except Exception as e:
         logger.error(e, exc_info=True)
+        send_tg_msg(
+            str(e),
+            cfg.telegram.bot_token,
+            str(cfg.telegram.chat_id),
+        )
     except KeyboardInterrupt:
         pass
 
