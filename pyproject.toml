@@ -16,11 +16,6 @@ build-backend = "setuptools.build_meta"
 [project.scripts]
 track = "balance_tracker.balances:main"
 plot = "balance_tracker.plot_portfolio:main"
-risk = "balance_tracker.calc_risk:main"
-
-
-[tool.mypy]
-ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 110
