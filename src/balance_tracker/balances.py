@@ -1,4 +1,5 @@
 import argparse
+from collections import defaultdict
 import dataclasses
 import datetime
 import json
@@ -194,6 +195,23 @@ def track_balances(cfg: Config) -> None:
         portfolio_prev_usd = Decimal(0)
 
     portfolio_usd = sum(info.real_value for info in balance_update.values())
+
+    portfolio_by_chain = defaultdict(Decimal)
+    for info in balance_update.values():
+        portfolio_by_chain[info.chain] += info.real_value
+
+    portfolio_by_chain_old = defaultdict(Decimal)
+    for info in previous_balance.values():
+        portfolio_by_chain_old[info.chain] += info.real_value
+
+    chain_strs = {}
+    for chain in portfolio_by_chain:
+        value = portfolio_by_chain[chain]
+        value_old = portfolio_by_chain_old[chain]
+        chg = value - value_old
+        chain_str = f"-------- {chain} -- ${value:,.2f} ({chg:,.2f})"
+        chain_strs[chain] = chain_str
+
     portfolio_chg = portfolio_usd - portfolio_prev_usd
     portfolio_chg_pct = 100 * (portfolio_usd - portfolio_prev_usd) / portfolio_prev_usd
     sign = "+" if portfolio_chg > 0 else ""
@@ -229,9 +247,8 @@ def track_balances(cfg: Config) -> None:
     msg = []
     for update in updates:
         chain, line_str = update.line_str()
-        chain_str = f"-------- {chain}:"
-        if chain_str not in msg:
-            msg.append(chain_str)
+        if chain_strs[chain] not in msg:
+            msg.append(chain_strs[chain])
         msg.append(line_str)
 
     # Print message
