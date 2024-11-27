@@ -16,7 +16,6 @@ from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
 from balance_tracker.config import Config
 
 # TODO: add support for PF tokens (Dexscreener does not have prices)
-# TODO: add better http error handling
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -90,14 +89,14 @@ class BalanceUpdate:
 
     def line_str(self) -> tuple[str, str]:
         if not self.new:
-            return ""
+            return "", ""
 
         if self.price_change_pct < 0:
             emoji = "🔴"
-        elif self.price_change_pct == 0:
-            emoji = "🟡"
         elif self.value_change_pct == 100:
             emoji = "🟣"
+        elif self.price_change_pct == 0:
+            emoji = "🟡"
         else:
             emoji = "🟢"
 
@@ -115,8 +114,8 @@ class BalanceUpdate:
 
         if self.value_change_pct != 0:
             chg = f"{sign}{self.value_change:,.2f}"
-            chg_pct = f"{sign}{self.value_change_pct:.2f}%"
-            chg_str = f" | {chg} ({chg_pct})"
+            # chg_pct = f"{sign}{self.value_change_pct:.2f}%"
+            chg_str = f" ({chg})"
         else:
             chg_str = ""
 
