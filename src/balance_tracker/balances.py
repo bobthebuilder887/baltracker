@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 
 
 def mcap_str(mcap: Decimal) -> str:
-    """Convert mcap into a readable string format, i.e. 1,600,000,000 -> 1.6B"""
+    """Convert mcap into a readable string format, i.e. 1600000000 -> 1.6B"""
+    r = 0
     if mcap < 1000:
         div = 1
         s = ""
@@ -39,13 +40,17 @@ def mcap_str(mcap: Decimal) -> str:
     elif mcap < 1000_000_000:
         div = 1000_000
         s = "M"
+        r = 1
     elif mcap < 1000_000_000_000:
         div = 1000_000_000
         s = "B"
+        r = 1
     else:
         div = 1000_000_000_000
         s = "T"
-    return f"{mcap / div:,.1f}{s}"
+        r = 1
+
+    return f"{mcap /div:.{r}f}{s}"
 
 
 @dataclasses.dataclass
