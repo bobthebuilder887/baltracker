@@ -209,7 +209,8 @@ def track_balances(cfg: Config) -> None:
         value = portfolio_by_chain[chain]
         value_old = portfolio_by_chain_old[chain]
         chg = value - value_old
-        chain_str = f"-------- {chain} -- ${value:,.2f} ({chg:,.2f})"
+        sign = "+" if chg > 0 else ""
+        chain_str = f"-------- {chain} -- ${value:,.2f} ({sign}{chg:,.2f})"
         chain_strs[chain] = chain_str
 
     portfolio_chg = portfolio_usd - portfolio_prev_usd
@@ -341,6 +342,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 )
                 msg_thread.start()
 
+                # TODO: make these more localized to the specific api
                 logger.error(e, exc_info=True)
                 if e.response.status_code == 401:
                     logger.fatal("Forbidden - API ")
