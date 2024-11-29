@@ -6,7 +6,7 @@ import matplotlib.ticker as ticker
 import pandas as pd
 
 
-def read_data(path, sample_interval: str = "5min") -> pd.Series:
+def read_data(path, sample_interval: str) -> pd.Series:
     df = pd.read_csv(
         filepath_or_buffer=path,
         header=None,
@@ -99,7 +99,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         "-s",
         "--sample_interval",
         type=str,
-        default="5min",
+        default="10min",
         help="Time interval for data samples (e.g., 5min, 1h, etc.)",
     )
     parser.add_argument(
