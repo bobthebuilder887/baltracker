@@ -129,12 +129,12 @@ class BalanceUpdate:
         if not self.new:
             return "", ""
 
-        if self.price_change_pct < 0:
+        if round(self.price_change_pct, 1) < 0:
             emoji = "🔴"
-        elif self.value_change_pct == 100:
+        elif round(self.value_change_pct, 1) == 100:
             emoji = "🟣"
 
-        elif self.price_change_pct == 0:
+        elif round(self.price_change_pct, 1) == 0:
             emoji = "🟡"
         else:
             emoji = "🟢"
@@ -242,9 +242,9 @@ def track_balances(cfg: Config) -> None:
     portfolio_chg_pct = 100 * (portfolio_usd - portfolio_prev_usd) / portfolio_prev_usd
     sign = "+" if round(portfolio_chg, 2) > 0 else ""
 
-    if portfolio_chg < 0:
+    if round(portfolio_chg, 2) < 0:
         emoji = "🔴"
-    elif portfolio_chg == 0:
+    elif round(portfolio_chg, 2) == 0:
         emoji = "🟡"
     else:
         emoji = "🟢"
