@@ -17,18 +17,6 @@ import rich
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
 from balance_tracker.config import Config
 
-# TODO: add support for PF tokens (Dexscreener does not have prices)
-# TODO: add telegram message for warning message
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    filename="baltracker.log",
-    filemode="a",
-)
-
-logger = logging.getLogger(__name__)
-
 
 def send_tg_msg(msg: str, bot_token: str, chat_id: str) -> requests.Response:
     url = f"https://api.telegram.org/bot{bot_token}/sendmessage"
@@ -43,7 +31,7 @@ class TelegramLogHandler(logging.Handler):
         self,
         bot_token: str,
         chat_id: str,
-        level: int = logging.WARNING,
+        level: int,
     ):
         super().__init__(level)
 
@@ -68,6 +56,9 @@ class TelegramLogHandler(logging.Handler):
 
         except Exception:
             self.handleError(record)
+
+
+logger = logging.getLogger(__name__)
 
 
 def mcap_str(mcap: Decimal) -> str:
@@ -351,7 +342,6 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
 
     args = parser.parse_args()
-
     cfg = Config.from_json(args.config_path)
 
     tg_handler = TelegramLogHandler(
@@ -359,7 +349,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         chat_id=str(cfg.telegram.chat_id),
         level=logging.INFO,
     )
-    logger.addHandler(tg_handler)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[logging.FileHandler("baltracker.log", mode="a"), tg_handler],
+    )
+
     INTERVAL_S = args.time_interval if args.time_interval > 0 else cfg.general.time_interval
 
     logger.info(f"Recording portfolio every {INTERVAL_S} seconds")
