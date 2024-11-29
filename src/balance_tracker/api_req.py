@@ -1,5 +1,6 @@
 import concurrent.futures
 import dataclasses
+import functools
 import json
 import random
 import time
@@ -7,6 +8,7 @@ from copy import deepcopy
 from decimal import Decimal
 from functools import cached_property
 from itertools import batched
+import logging
 from pathlib import Path
 from typing import Iterable
 
@@ -15,6 +17,12 @@ import requests
 TokenAddress = str
 WalletAddress = str
 WalletBalances = dict[WalletAddress, Decimal]
+
+
+# TODO: rewrite in a way that maximizes update throughput and acurracy
+# - [ ] Each request should be handled in a separate thread in perpetuity at the maximum possible rate
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -58,6 +66,24 @@ class TokenInfo:
 TokenInfos = dict[TokenAddress, TokenInfo]
 
 
+def handle_sui_req(req) -> requests.Response:
+    resp = req()
+
+    if resp.status_code == 500 or resp.status_code == 503:
+        logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+        return handle_sui_req(req)
+    elif resp.status_code == 429:
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+        return handle_sui_req(req)
+    else:
+        resp.raise_for_status()
+
+    return resp
+
+
 def get_sui_balances(wallet_address: list[WalletAddress], api_key: str) -> TokenInfos:
     payload = {"objectTypes": ["coin", "nft"]}
     headers = {
@@ -71,8 +97,8 @@ def get_sui_balances(wallet_address: list[WalletAddress], api_key: str) -> Token
         for wallet in wallet_address:
             url = f"https://api.blockberry.one/sui/v1/accounts/{wallet}/objects"
 
-            resp = session.post(url, json=payload, headers=headers)
-            resp.raise_for_status()
+            req = functools.partial(session.post, url, json=payload, headers=headers)
+            resp = handle_sui_req(req)
             responses[wallet] = resp.json().get("coins", [])
 
             if len(wallet_address) > 1:
@@ -111,9 +137,31 @@ def get_gecko_price(ticker: str) -> Decimal:
         },
     )
 
-    resp.raise_for_status()
+    if resp.status_code == 429:
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+        return get_gecko_price(ticker)
+    elif resp.status_code == 500 or resp.status_code == 503:
+        logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+    else:
+        resp.raise_for_status()
 
     return Decimal(resp.json()[ticker]["usd"])
+
+
+def handle_moralis_req(req) -> dict:
+    resp = req()
+
+    if resp.status_code == 500 or resp.status_code == 503:
+        logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+        return handle_moralis_req(req)
+    else:
+        resp.raise_for_status()
+
+    return resp.json()
 
 
 def get_native_change_evm(
@@ -136,9 +184,9 @@ def get_native_change_evm(
         session.headers.update(header)
         for chain in evm_chains:
             params["chain"] = chain
-            resp = session.get(url, params=params)
-            resp.raise_for_status()
-            native_balances = resp.json()[0]["wallet_balances"]
+            req = functools.partial(session.get, url, params=params)
+            resp = handle_moralis_req(req)
+            native_balances = resp[0]["wallet_balances"]
             responses[chain] = {v["address"]: v["balance"] for v in native_balances}
 
     if native_bal_path.exists():
@@ -163,6 +211,17 @@ def get_native_change_evm(
                 continue
 
     return update_required
+
+
+def moralis_get_req(session: requests.Session, url: str, params: dict[str, str]) -> dict:
+    resp = session.get(url, params=params)
+    # TODO: go oer the docs and see what to do for each error case
+    if resp.status_code == 429:
+        time.sleep(60)
+        return moralis_get_req(session, url, params)
+    else:
+        resp.raise_for_status()
+    return resp.json()
 
 
 def get_token_balances(
@@ -190,10 +249,8 @@ def get_token_balances(
         sol_responses = {}
         for wallet in sol_wallets:
             url = sol_url.format(wallet)
-            resp = session.get(url, params=params)
-            resp.raise_for_status()
-
-            data = resp.json()
+            req = functools.partial(session.get, url, params=params)
+            data = handle_moralis_req(req)
             sol_responses[wallet] = data
 
         evm_responses = {}
@@ -219,9 +276,8 @@ def get_token_balances(
             params["chain"] = chain
             for wallet in wallets:
                 url = evm_url.format(wallet)
-                resp = session.get(url, params=params)
-                resp.raise_for_status()
-                data = resp.json()
+                req = functools.partial(session.get, url, params=params)
+                data = handle_moralis_req(req)
                 evm_responses[(wallet, chain)] = data
 
     for wallet, data in sol_responses.items():
@@ -278,6 +334,23 @@ def get_token_balances(
     return balances
 
 
+def handle_dex_req(req) -> dict:
+    resp = req()
+    if resp.status_code == 500 or resp.status_code == 503:
+        logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+        return handle_dex_req(req)
+    elif resp.status_code == 429:
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        time.sleep(60)
+        return handle_dex_req(req)
+    else:
+        resp.raise_for_status()
+
+    return resp.json()
+
+
 def get_token_pair_info(token_contracts: Iterable[TokenAddress]) -> list[dict]:
     URL, N_MAX = "https://api.dexscreener.com/latest/dex/tokens/", 30
     token_contracts = list(token_contracts)
@@ -287,10 +360,11 @@ def get_token_pair_info(token_contracts: Iterable[TokenAddress]) -> list[dict]:
     with requests.Session() as session:
         for split in splits:
             url = f"{URL}{','.join(split)}"
-            resp = session.get(url)
-            resp.raise_for_status()
-            if resp.json().get("pairs"):
-                all_pairs.extend(resp.json()["pairs"])
+            req = functools.partial(session.get, url=url)
+            data = handle_dex_req(req)
+            pairs = data.get("pairs", [])
+            if pairs:
+                all_pairs.extend(pairs)
     return all_pairs
 
 

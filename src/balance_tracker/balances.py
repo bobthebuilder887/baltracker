@@ -2,6 +2,7 @@ import argparse
 from collections import defaultdict
 import dataclasses
 import datetime
+import functools
 import json
 import logging
 import threading
@@ -17,8 +18,9 @@ from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
 from balance_tracker.config import Config
 
 # TODO: add support for PF tokens (Dexscreener does not have prices)
+# TODO: add telegram message for warning message
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     filename="baltracker.log",
@@ -26,6 +28,46 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+
+def send_tg_msg(msg: str, bot_token: str, chat_id: str) -> requests.Response:
+    url = f"https://api.telegram.org/bot{bot_token}/sendmessage"
+    params = {"chat_id": chat_id, "text": msg, "parse_mode": "markdown"}
+    resp = requests.post(url, params=params)
+    resp.raise_for_status()
+    return resp
+
+
+class TelegramLogHandler(logging.Handler):
+    def __init__(
+        self,
+        bot_token: str,
+        chat_id: str,
+        level: int = logging.WARNING,
+    ):
+        super().__init__(level)
+
+        self.send_msg = functools.partial(send_tg_msg, bot_token=bot_token, chat_id=chat_id)
+
+        # Create formatter for messages
+        self.formatter = logging.Formatter(
+            "🚨 *%(levelname)s* 🚨\n" "%(asctime)s\n\n" "`%(filename)s:%(lineno)d`\n" "```\n%(message)s\n```"
+        )
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Send log message to Telegram."""
+        try:
+            # Format the message with Markdown
+            msg = self.formatter.format(record)
+            if len(msg) > 4096:
+                rest = len(msg) - len(record.message)
+                record.message = f"{record.message[:4093-rest]}..."
+                msg = self.formatter.format(record)
+            resp = self.send_msg(msg)
+            resp.raise_for_status()
+
+        except Exception:
+            self.handleError(record)
 
 
 def mcap_str(mcap: Decimal) -> str:
@@ -129,18 +171,6 @@ class BalanceUpdate:
         return chain, f"{emoji} {symbol} {mcap} | {value}{chg_str}"
 
 
-def send_tg_msg(msg: str, bot_token: str, chat_id: str):
-    url = f"https://api.telegram.org/bot{bot_token}/sendmessage"
-    params = {"chat_id": chat_id, "text": msg, "parse_mode": "markdown"}
-    logger.info("sending a message to tg bot")
-    try:
-        resp = requests.post(url, params=params)
-        resp.raise_for_status()
-        logger.info("message sent")
-    except requests.HTTPError as e:
-        logger.error(e, exc_info=True)
-
-
 def save_balances(balances: dict[TokenAddress, TokenInfo], path: Path) -> None:
     balances_json = {k: v.to_json_dict() for k, v in balances.items()}
     with open(path, "w") as f:
@@ -215,7 +245,7 @@ def track_balances(cfg: Config) -> None:
         value_old = portfolio_by_chain_old[chain]
         chg = value - value_old
         sign = "+" if chg > 0 else ""
-        chain_str = f"-------- [{chain.upper()}] -- ${value:,.2f} ({sign}{chg:,.2f})"
+        chain_str = f"-------- [[{chain.upper()}]] -- ${value:,.2f} ({sign}{chg:,.2f})"
         chain_strs[chain] = chain_str
 
     portfolio_chg = portfolio_usd - portfolio_prev_usd
@@ -323,52 +353,26 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args()
 
     cfg = Config.from_json(args.config_path)
+
+    tg_handler = TelegramLogHandler(
+        bot_token=cfg.telegram.bot_token,
+        chat_id=str(cfg.telegram.chat_id),
+        level=logging.INFO,
+    )
+    logger.addHandler(tg_handler)
     INTERVAL_S = args.time_interval if args.time_interval > 0 else cfg.general.time_interval
-    RETRY_S = 60
 
     logger.info(f"Recording portfolio every {INTERVAL_S} seconds")
 
     try:
         while True:
-            try:
-                cfg = Config.from_json(args.config_path)
-                cfg.general.verbose = args.verbose if args.verbose else cfg.general.verbose
-                track_balances(cfg)
-                time.sleep(INTERVAL_S)
-            # Network error handling
-            except requests.HTTPError as e:
-                msg_thread = threading.Thread(
-                    target=send_tg_msg,
-                    args=(
-                        str(e),
-                        cfg.telegram.bot_token,
-                        str(cfg.telegram.chat_id),
-                    ),
-                )
-                msg_thread.start()
+            cfg = Config.from_json(args.config_path)
+            cfg.general.verbose = args.verbose if args.verbose else cfg.general.verbose
+            track_balances(cfg)
+            time.sleep(INTERVAL_S)
 
-                # TODO: make these more localized to the specific api
-                logger.error(e, exc_info=True)
-                if e.response.status_code == 401:
-                    logger.fatal("Forbidden - API ")
-                    raise
-                elif e.response.status_code == 429:
-                    if "moralis" in e.response.url:
-                        logger.fatal("Ran out of limits for Moralis")
-                        raise
-                else:
-                    pass
-
-                logger.warning(f"Network error, trying again in {RETRY_S}")
-                msg_thread.join()
-                time.sleep(RETRY_S)
     except Exception as e:
         logger.error(e, exc_info=True)
-        send_tg_msg(
-            str(e),
-            cfg.telegram.bot_token,
-            str(cfg.telegram.chat_id),
-        )
     except KeyboardInterrupt:
         pass
 
