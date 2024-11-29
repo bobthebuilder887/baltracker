@@ -215,7 +215,7 @@ def track_balances(cfg: Config) -> None:
         value_old = portfolio_by_chain_old[chain]
         chg = value - value_old
         sign = "+" if chg > 0 else ""
-        chain_str = f"-------- {chain} -- ${value:,.2f} ({sign}{chg:,.2f})"
+        chain_str = f"-------- [{chain.upper()}] -- ${value:,.2f} ({sign}{chg:,.2f})"
         chain_strs[chain] = chain_str
 
     portfolio_chg = portfolio_usd - portfolio_prev_usd
