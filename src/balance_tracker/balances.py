@@ -45,7 +45,6 @@ class TelegramLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         """Send log message to Telegram."""
         try:
-            # Format the message with Markdown
             msg = self.formatter.format(record)
             if len(msg) > 4096:
                 rest = len(msg) - len(record.message)
@@ -142,7 +141,7 @@ class BalanceUpdate:
 
         sign = ""
 
-        if self.value_change_pct > 0:
+        if round(self.value_change, 2) > 0:
             sign = "+"
 
         # Keep the symbol a certain size
@@ -152,9 +151,8 @@ class BalanceUpdate:
         chain = self.new.chain
         value = f"${self.new.real_value:,.2f}"
 
-        if self.value_change_pct != 0:
+        if round(self.value_change, 2) != 0:
             chg = f"{sign}{self.value_change:,.2f}"
-            # chg_pct = f"{sign}{self.value_change_pct:.2f}%"
             chg_str = f" ({chg})"
         else:
             chg_str = ""
@@ -235,13 +233,13 @@ def track_balances(cfg: Config) -> None:
         value = portfolio_by_chain[chain]
         value_old = portfolio_by_chain_old[chain]
         chg = value - value_old
-        sign = "+" if chg > 0 else ""
+        sign = "+" if round(chg, 2) > 0 else ""
         chain_str = f"-------- [[{chain.upper()}]] -- ${value:,.2f} ({sign}{chg:,.2f})"
         chain_strs[chain] = chain_str
 
     portfolio_chg = portfolio_usd - portfolio_prev_usd
     portfolio_chg_pct = 100 * (portfolio_usd - portfolio_prev_usd) / portfolio_prev_usd
-    sign = "+" if portfolio_chg > 0 else ""
+    sign = "+" if round(portfolio_chg, 2) > 0 else ""
 
     if portfolio_chg < 0:
         emoji = "🔴"
