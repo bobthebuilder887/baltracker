@@ -157,7 +157,12 @@ class BalanceUpdate:
         else:
             chg_str = ""
 
-        return chain, f"{emoji} {symbol} {mcap} | {value}{chg_str}"
+        if chg_str:
+            line_str = f"*{emoji} {symbol} {mcap} | {value}{chg_str}*"
+        else:
+            line_str = f"{emoji} {symbol} {mcap} | {value}{chg_str}"
+
+        return chain, line_str
 
 
 def save_balances(balances: dict[TokenAddress, TokenInfo], path: Path) -> None:
@@ -235,7 +240,7 @@ def track_balances(cfg: Config) -> None:
         chg = value - value_old
         sign = "+" if round(chg, 2) > 0 else ""
         chg_str = f"({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
-        chain_str = f"-------- [[{chain.upper()}]] -- ${value:,.2f} {chg_str}"
+        chain_str = f"*-------- [[{chain.upper()}]] -- ${value:,.2f} {chg_str}*"
         chain_strs[chain] = chain_str
 
     portfolio_chg = portfolio_usd - portfolio_prev_usd
