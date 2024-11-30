@@ -273,6 +273,13 @@ def track_balances(cfg: Config) -> None:
     msg = []
     for update in updates:
         chain, line_str = update.line_str()
+
+        # TODO: consider highilghting significant changes
+        if 100 * update.value_change / portfolio_prev_usd > 0.25:
+            line_str += " 🔥"
+        elif 100 * update.value_change / portfolio_prev_usd < -0.25:
+            line_str += " ❗️"
+
         if chain_strs[chain] not in msg:
             msg.append(chain_strs[chain])
         msg.append(line_str)
