@@ -291,6 +291,7 @@ def track_balances(cfg: Config) -> None:
 
         if chain_strs[chain] not in msg:
             msg.append(chain_strs[chain])
+            msg.append("----------------")
         msg.append(line_str)
 
     # Print message
