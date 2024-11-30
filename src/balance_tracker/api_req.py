@@ -69,13 +69,12 @@ TokenInfos = dict[TokenAddress, TokenInfo]
 def handle_sui_req(req) -> requests.Response:
     resp = req()
 
-    if resp.status_code == 500 or resp.status_code == 503:
+    if resp.status_code in (500, 501, 502, 503):
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_sui_req(req)
     elif resp.status_code == 429:
-        logger.warning(
-            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_sui_req(req)
     else:
@@ -138,8 +137,7 @@ def get_gecko_price(ticker: str) -> Decimal:
     )
 
     if resp.status_code == 429:
-        logger.warning(
-            f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return get_gecko_price(ticker)
     elif resp.status_code == 500 or resp.status_code == 503:
@@ -341,8 +339,7 @@ def handle_dex_req(req) -> dict:
         time.sleep(60)
         return handle_dex_req(req)
     elif resp.status_code == 429:
-        logger.warning(
-            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_dex_req(req)
     else:
