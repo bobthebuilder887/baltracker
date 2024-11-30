@@ -36,6 +36,7 @@ class General:
     min_value_usd: int
     time_interval: int
     data_path: str
+    hide_balances: bool
 
 
 @dataclasses.dataclass

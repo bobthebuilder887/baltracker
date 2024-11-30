@@ -50,8 +50,7 @@ class TelegramLogHandler(logging.Handler):
                 rest = len(msg) - len(record.message)
                 record.message = f"{record.message[:4093-rest]}..."
                 msg = self.formatter.format(record)
-            resp = self.send_msg(msg)
-            resp.raise_for_status()
+            self.send_msg(msg)
 
         except Exception:
             self.handleError(record)
@@ -125,7 +124,7 @@ class BalanceUpdate:
                 )
                 self.price_change_pct = 100 * (self.new.price - self.old.price) / self.old.price
 
-    def line_str(self) -> tuple[str, str]:
+    def line_str(self, hide_balance: bool = False) -> tuple[str, str]:
         if not self.new:
             return "", ""
 
@@ -161,6 +160,11 @@ class BalanceUpdate:
             line_str = f"*{emoji} {symbol} {mcap} | {value}{chg_str}*"
         else:
             line_str = f"{emoji} {symbol} {mcap} | {value}{chg_str}"
+
+        if hide_balance:
+            for c in line_str:
+                if c.isnumeric():
+                    line_str = line_str.replace(c, "9")
 
         return chain, line_str
 
@@ -239,12 +243,16 @@ def track_balances(cfg: Config) -> None:
         value_old = portfolio_by_chain_old[chain]
         chg = value - value_old
         sign = "+" if round(chg, 2) > 0 else ""
-        chg_str = f"({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
-        chain_str = f"\n*⛓️ [{chain.upper()}] -- [${value:,.2f} {chg_str}]*"
+        chg_str = f" ({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
+        chain_str = f"\n*⛓️ [{chain.upper()}] -- [${value:,.2f}{chg_str}]*"
         if chg / portfolio_prev_usd > 0.01:
             chain_str += " 🔥"
         elif chg / portfolio_prev_usd < -0.01:
             chain_str += " ❗️"
+        if cfg.general.hide_balances:
+            for c in chain_str:
+                if c.isnumeric():
+                    chain_str = chain_str.replace(c, "9")
         chain_strs[chain] = chain_str
 
     portfolio_chg = portfolio_usd - portfolio_prev_usd
@@ -261,6 +269,10 @@ def track_balances(cfg: Config) -> None:
     ts_str = datetime.datetime.fromtimestamp(TIME_S).strftime("%Y-%m-%d %H:%M")
     ts_str = f"*{ts_str}: PORTFOLIO UPDATE:*\n-------------"
     portfolio_str = f"*{emoji} ${portfolio_usd:,.2f} ({sign}{portfolio_chg:,.2f} ({portfolio_chg_pct:.2f}%))*"
+    if cfg.general.hide_balances:
+        for c in portfolio_str:
+            if c.isnumeric():
+                portfolio_str = portfolio_str.replace(c, "9")
 
     all_contracts = set(previous_balance.keys()).union(set(balance_update.keys()))
 
@@ -281,7 +293,7 @@ def track_balances(cfg: Config) -> None:
 
     msg = []
     for update in updates:
-        chain, line_str = update.line_str()
+        chain, line_str = update.line_str(hide_balance=cfg.general.hide_balances)
 
         # TODO: consider highilghting significant changes
         if 100 * update.value_change / portfolio_prev_usd > 0.25:
