@@ -1,17 +1,22 @@
-# add arguments when running commands, e.g. make upload_config REMOTE="user@host" KEY="~/.ssh/your_key"
-REMOTE :=
-KEY :=
+# Python project related variables
 PY := python3.12
-PROJECT_DIR := src/balance_tracker
 PROJECT_NAME := baltracker
+PROJECT_DIR := src/balance_tracker
 ENV_DIR := .venv
 ENV := ./$(ENV_DIR)/bin/$(PY)
 PIP := ./$(ENV_DIR)/bin/pip
 RUFF := ./$(ENV_DIR)/bin/ruff
 ISORT := ./$(ENV_DIR)/bin/isort
 LOCAL := ~/Projects/$(PROJECT_NAME)
+# Project defined variables
 CFG_FILE := config.json
 DATA_DIR := .data
+REMOTE :=
+KEY :=
+
+.PHONY: all install install_dev format clean get_config get_log get_data upload_data update_config update_remote
+
+all: clean install_dev
 
 install:
 	${PY} -m venv ${ENV_DIR};
@@ -23,7 +28,7 @@ install_dev:
 	${PIP} install --upgrade pip;
 	${PIP} install -e '.[optional-dependencies]'
 
-lint:
+format:
 	${RUFF} format ${PROJECT_DIR}/*.py && ${ISORT} ${PROJECT_DIR}/*.py
 
 clean:
@@ -37,7 +42,7 @@ get_log:
 	scp -i ${KEY} ${REMOTE}:~/${PROJECT_NAME}/${PROJECT_NAME}.log ${LOCAL}
 
 get_data:
-	scp -i ${KEY} -r ${REMOTE}:~/${PROJECT_NAME}/${DATA_DIR} ${LOCAL}/${DATA_DIR}
+	scp -i ${KEY} -r ${REMOTE}:~/${PROJECT_NAME}/${DATA_DIR} ${LOCAL}
 
 upload_data:
 	scp -i ${KEY} -r .data ${REMOTE}:~/${PROJECT_NAME}
