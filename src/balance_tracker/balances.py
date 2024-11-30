@@ -240,7 +240,7 @@ def track_balances(cfg: Config) -> None:
         chg = value - value_old
         sign = "+" if round(chg, 2) > 0 else ""
         chg_str = f"({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
-        chain_str = f"*⛓️ [{chain.upper()}] -- [${value:,.2f} {chg_str}]*"
+        chain_str = f"\n*⛓️ [{chain.upper()}] -- [${value:,.2f} {chg_str}]*"
         if chg / portfolio_prev_usd > 0.01:
             chain_str += " 🔥"
         elif chg / portfolio_prev_usd < -0.01:
@@ -259,8 +259,8 @@ def track_balances(cfg: Config) -> None:
         emoji = "🟢"
 
     ts_str = datetime.datetime.fromtimestamp(TIME_S).strftime("%Y-%m-%d %H:%M")
-    ts_str = f"*{ts_str}: PORTFOLIO UPDATE:*"
-    portfolio_str = f"{emoji} ${portfolio_usd:,.2f} ({sign}{portfolio_chg:,.2f} ({portfolio_chg_pct:.2f}%))"
+    ts_str = f"*{ts_str}: PORTFOLIO UPDATE:*\n-------------"
+    portfolio_str = f"*{emoji} ${portfolio_usd:,.2f} ({sign}{portfolio_chg:,.2f} ({portfolio_chg_pct:.2f}%))*"
 
     all_contracts = set(previous_balance.keys()).union(set(balance_update.keys()))
 
