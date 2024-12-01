@@ -2,7 +2,7 @@
 name = 'balance-tracker'
 description = ""
 version = '0.0.1'
-dependencies = ["requests>=2.32.3", "rich>=13.3.1"]
+dependencies = ["requests>=2.32.3"]
 
 [project.optional-dependencies]
 dev = ["isort", "ruff"]

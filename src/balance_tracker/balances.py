@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Literal, Sequence
 
 import requests
-import rich
 
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_balance_update
 from balance_tracker.config import Config
@@ -308,10 +307,10 @@ def track_balances(cfg: Config) -> None:
 
     # Print message
     if cfg.general.verbose:
-        rich.print(ts_str)
-        rich.print("\n".join(msg))
-        rich.print("-" * len(portfolio_str))
-        rich.print(portfolio_str)
+        print(ts_str)
+        print("\n".join(msg))
+        print("-" * len(portfolio_str))
+        print(portfolio_str)
 
     # Send message
     if cfg.telegram.send_msg:
