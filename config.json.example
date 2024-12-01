@@ -3,7 +3,8 @@
     "verbose": false, 
     "min_value_usd": 1,
     "time_interval": 600,
-    "data_path": ".data"
+    "data_path": ".data",
+    "hide_balances": false
   },
   "keys": {
     "sui_api_key": "your_key", 
