@@ -26,7 +26,7 @@ install:
 install_dev:
 	${PY} -m venv ${ENV_DIR};
 	${PIP} install --upgrade pip;
-	${PIP} install -e '.[optional-dependencies]'
+	${PIP} install -e '.[all]'
 
 format:
 	${RUFF} format ${PROJECT_DIR}/*.py && ${ISORT} ${PROJECT_DIR}/*.py
