@@ -2,13 +2,13 @@ import concurrent.futures
 import dataclasses
 import functools
 import json
+import logging
 import random
 import time
 from copy import deepcopy
 from decimal import Decimal
 from functools import cached_property
 from itertools import batched
-import logging
 from pathlib import Path
 from typing import Iterable
 

@@ -1,5 +1,4 @@
 import argparse
-from collections import defaultdict
 import dataclasses
 import datetime
 import functools
@@ -7,6 +6,7 @@ import json
 import logging
 import threading
 import time
+from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 from typing import Literal, Sequence
