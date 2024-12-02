@@ -4,8 +4,8 @@ Tools for tracking crypto wallet balances
 
 ## Requirements
 
-- Python3.12
-- Telegram Bot API key.
+- Python3.12 or higher
+- Telegram Bot token.
 - Moralis API keys for SOL and EVM wallets
 - Blockberry API key for SUI wallets
 
@@ -52,3 +52,9 @@ Set up on a remote ubuntu machine as non-root (make sure to have a configuration
 ```{bash}
 cd ~ && git clone https://github.com/bobthebuilder887/baltracker && cd baltracker && cp ../config.json . && bash sys/install.sh
 ```
+
+## TODO
+
+- [ ] Re-add support for Aptos
+- [ ] Add EVM NFT support (Moralis)
+- [ ] Make the prices refresh faster (inbetween balance updates)
