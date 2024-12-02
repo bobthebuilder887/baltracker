@@ -9,8 +9,8 @@ PY=python3.12
 sudo apt-get update -y && sudo apt-get upgrade -y
 # Make sure python is installed
 sudo apt-get install -y $PY python3-pip
-# Install the project using make using dev mode to be able to update the bot
-make install_dev
+# Install the project (clean if needed) using make
+make all # cleans old and installs new in dev mode
 
 # Check if a valid config.json file exists (runner requires a working config)
 if [ ! -f config.json ]; then
@@ -31,9 +31,9 @@ mkdir -p ~/.config/systemd/user
 # Enable user's systemd instance to run after logout (as root):
 sudo loginctl enable-linger $USER
 # copy service file
-sudo cp ./sys/$SERVICE /home/$USER/.config/systemd/user
+cp ./sys/$SERVICE /home/$USER/.config/systemd/user
 # replace user_name with your user name in service file
-sudo sed -i -e "s/user_name/$USER/g" /home/$USER/.config/systemd/user/$SERVICE
+sed -i -e "s/user_name/$USER/g" /home/$USER/.config/systemd/user/$SERVICE
 # reload systemd
 systemctl --user daemon-reload
 # enable service
