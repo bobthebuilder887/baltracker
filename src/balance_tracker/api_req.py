@@ -449,7 +449,7 @@ def get_balance_update(
     sui_api_key,
     old_balances,
     native_bal_path,
-):
+) -> tuple:
     def sui_req() -> dict:
         return get_sui_balances(sui_wallets, sui_api_key)
 
@@ -480,7 +480,7 @@ def get_balance_update(
 
     # set CoinGecko price
     for chain, info in evm_info.items():
-        if info.gecko_ticker in evm_prices:
+        if info.moralis in evm_prices:
             token_balances[chain].price = evm_prices[info.gecko_ticker]
 
     all_balances = {**sui_balances, **token_balances}
@@ -491,7 +491,10 @@ def get_balance_update(
             **token_balances,
         }.keys()
     ).difference(set(evm_info))
+    return token_contracts, all_balances
 
+
+def get_and_set_price_info(token_contracts, unsupported_balances, all_balances):
     price_info = get_token_price_info(list(token_contracts))
 
     for token, price_info in price_info.items():

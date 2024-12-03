@@ -39,8 +39,8 @@ class General:
     hide_balances: bool
 
 
-@dataclasses.dataclass
-class Config:
+# @dataclasses.dataclass
+class Config(NamedTuple):
     keys: Keys
     general: General
     telegram: TgConfig
