@@ -74,7 +74,8 @@ def handle_sui_req(req) -> requests.Response:
         time.sleep(60)
         return handle_sui_req(req)
     elif resp.status_code == 429:
-        logger.warning(f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_sui_req(req)
     else:
@@ -137,7 +138,8 @@ def get_gecko_price(ticker: str) -> Decimal:
     )
 
     if resp.status_code == 429:
-        logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return get_gecko_price(ticker)
     elif resp.status_code == 500 or resp.status_code == 503:
@@ -339,7 +341,8 @@ def handle_dex_req(req) -> dict:
         time.sleep(60)
         return handle_dex_req(req)
     elif resp.status_code == 429:
-        logger.warning(f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_dex_req(req)
     else:
@@ -454,8 +457,10 @@ def get_balance_update(
         return get_sui_balances(sui_wallets, sui_api_key)
 
     def gecko_req() -> dict:
+        chains = set(map(lambda x: x.moralis, evm_info.values()))
         gecko_tickers = set(map(lambda x: x.gecko_ticker, evm_info.values()))
-        return {gt: get_gecko_price(gt) for gt in gecko_tickers}
+        z = zip(chains, gecko_tickers)
+        return {c: get_gecko_price(gt) for c, gt in z}
 
     def balances_req() -> dict:
         balances = get_token_balances(
@@ -479,9 +484,9 @@ def get_balance_update(
         evm_prices = evm_prices_future.result()
 
     # set CoinGecko price
-    for chain, info in evm_info.items():
-        if info.moralis in evm_prices:
-            token_balances[chain].price = evm_prices[info.gecko_ticker]
+    for chain in evm_info:
+        if chain in evm_prices:
+            token_balances[chain].price = evm_prices[chain]
 
     all_balances = {**sui_balances, **token_balances}
     token_contracts = set(
