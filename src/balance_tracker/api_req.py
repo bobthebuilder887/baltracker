@@ -7,7 +7,6 @@ import random
 import time
 from copy import deepcopy
 from decimal import Decimal
-from functools import cached_property
 from itertools import batched
 from pathlib import Path
 from typing import Iterable
@@ -37,15 +36,15 @@ class TokenInfo:
     market_cap: Decimal = Decimal(0)
     link: str = ""
 
-    @cached_property
+    @property
     def balance(self) -> Decimal:
         return Decimal(sum(self.balances.values()))
 
-    @cached_property
+    @property
     def value(self) -> Decimal:
         return self.balance * self.price
 
-    @cached_property
+    @property
     def real_value(self):
         if self.liquidity == 0:
             return self.value
@@ -140,7 +139,7 @@ def get_gecko_price(ticker: str) -> Decimal:
         logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return get_gecko_price(ticker)
-    elif resp.status_code == 500 or resp.status_code == 503:
+    if resp.status_code in (500, 501, 502, 503):
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
     else:
@@ -152,7 +151,7 @@ def get_gecko_price(ticker: str) -> Decimal:
 def handle_moralis_req(req) -> dict:
     resp = req()
 
-    if resp.status_code == 500 or resp.status_code == 503:
+    if resp.status_code in (500, 501, 502, 503):
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_moralis_req(req)
@@ -334,7 +333,7 @@ def get_token_balances(
 
 def handle_dex_req(req) -> dict:
     resp = req()
-    if resp.status_code == 500 or resp.status_code == 503:
+    if resp.status_code in (500, 501, 502, 503):
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_dex_req(req)
@@ -481,8 +480,8 @@ def get_balance_update(
 
     # set CoinGecko price
     for chain, info in evm_info.items():
-        if info.gecko_ticker in evm_prices:
-            token_balances[chain].price = evm_prices[chain]
+        if info.gecko_ticker in evm_prices and chain in token_balances:
+            token_balances[chain].price = evm_prices[info.gecko_ticker]
 
     all_balances = {**sui_balances, **token_balances}
     token_contracts = set(
