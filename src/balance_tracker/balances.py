@@ -299,7 +299,7 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
 
     if portfolio_path.exists():
         with open(portfolio_path) as f:
-            portfolio_prev_usd = Decimal(f.readlines()[-1].strip().split(", ")[-1])
+            portfolio_prev_usd = Decimal(f.readlines()[-1].strip().split(",")[-1].strip())
     else:
         portfolio_prev_usd = Decimal(0)
 
