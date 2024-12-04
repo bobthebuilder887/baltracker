@@ -3,18 +3,18 @@ import dataclasses
 import datetime
 import json
 import logging
-import threading
+import os
 import time
 from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 from typing import Literal, Sequence
 
-
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_and_set_price_info, get_balance_update
 from balance_tracker.config import Config
-from balance_tracker.tg_utils import TGMsgBot, TelegramLogHandler
+from balance_tracker.tg_utils import TelegramLogHandler, TGMsgBot
 
+TEST_MODE = False
 
 logger = logging.getLogger(__name__)
 
@@ -278,12 +278,12 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
     if not Path(cfg.general.data_path).exists():
         Path(cfg.general.data_path).mkdir(parents=True)
 
-    PORTFOLIO_PATH = Path(cfg.general.data_path) / "portfolio.csv"
-    TOKEN_BAL_PATH = Path(cfg.general.data_path) / "token_balances.json"
-    NATIVE_BAL_PATH = Path(cfg.general.data_path) / ".native_balances.json"
+    portfolio_path = Path(cfg.general.data_path) / "portfolio.csv"
+    token_bal_path = Path(cfg.general.data_path) / "token_balances.json"
+    native_bal_path = Path(cfg.general.data_path) / ".native_balances.json"
 
     # Fill in coins that don't have dexscreener update due to low activity
-    previous_balance = load_previous_balance(TOKEN_BAL_PATH)
+    previous_balance = load_previous_balance(token_bal_path)
 
     token_contracts, all_balances = get_balance_update(
         evm_wallets=cfg.evm_wallets,
@@ -294,26 +294,27 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
         moralis_api_key=cfg.keys.moralis_api_key,
         sui_api_key=cfg.keys.sui_api_key,
         old_balances=previous_balance,
-        native_bal_path=NATIVE_BAL_PATH,
+        native_bal_path=native_bal_path,
     )
 
-    if PORTFOLIO_PATH.exists():
-        with open(PORTFOLIO_PATH) as f:
+    if portfolio_path.exists():
+        with open(portfolio_path) as f:
             portfolio_prev_usd = Decimal(f.readlines()[-1].strip().split(", ")[-1])
     else:
         portfolio_prev_usd = Decimal(0)
 
-    updates = interval_s // 2
-    resp = False
+    updates = interval_s  # One update per second until it's time to update balance
+    sent = False
     while updates > 0:
+        start = time.perf_counter()
         msg = gen_bal_update(
             cfg=cfg,
             token_contracts=token_contracts,
             all_balances=all_balances,
             previous_balance=previous_balance,
             time_s=int(time.time()),
-            portfolio_path=PORTFOLIO_PATH,
-            token_bal_path=TOKEN_BAL_PATH,
+            portfolio_path=portfolio_path,
+            token_bal_path=token_bal_path,
             portfolio_prev_usd=portfolio_prev_usd,
         )
 
@@ -321,17 +322,16 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
         if cfg.general.verbose:
             print(msg)
 
-        # Send initial message
-        if tg_bot and not resp:
-            resp = tg_bot.send_msg(msg)
-        # Keep updating last msg
-        elif tg_bot:
-            tg_bot.edit_last_msg(msg)
+        if tg_bot and not sent:
+            tg_bot.schedule_send_msg(msg=msg)
+            sent = True
+        elif tg_bot and getattr(tg_bot, "_last_msg", False):
+            tg_bot.schedule_edit_msg(msg=msg)
         else:
             pass
-
-        time.sleep(2)
-        updates -= 1
+        end = time.perf_counter()
+        time_diff = end - start
+        updates -= time_diff
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -380,6 +380,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             level=logging.INFO,
         )
 
+        tg_bot.send_forever()
+
         logger.addHandler(tg_handler)
         m = "Sending messages to Telegram. To disable, set send_msg to false in config.json and restart the script"
         logger.warning(m)
@@ -387,14 +389,21 @@ def main(argv: Sequence[str] | None = None) -> None:
         tg_bot = None
 
     INTERVAL_S = args.time_interval if args.time_interval > 0 else cfg.general.time_interval
+    NATIVE_BAL_PATH = Path(cfg.general.data_path) / ".native_balances.json"
 
     logger.info(f"Recording portfolio every {INTERVAL_S} seconds")
 
     try:
+        n_updates = 0
         while True:
             cfg = Config.from_json(args.config_path)
             cfg.general.verbose = args.verbose if args.verbose else cfg.general.verbose
             track_balances(cfg, INTERVAL_S, tg_bot)
+            n_updates += 1
+            # reload native eth balances roughly every 6 updates
+            if not TEST_MODE and n_updates == 6:
+                os.remove(NATIVE_BAL_PATH)
+                n_updates = 0
 
     except Exception as e:
         logger.error(e, exc_info=True)
