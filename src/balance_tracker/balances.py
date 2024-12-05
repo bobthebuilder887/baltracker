@@ -403,6 +403,10 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     logger.info(f"Recording portfolio every {INTERVAL_S} seconds")
     signal.signal(signal.SIGTERM, term_cb)
+    signal.signal(signal.SIGTERM, term_cb)
+    signal.signal(signal.SIGINT, term_cb)
+    signal.signal(signal.SIGHUP, term_cb)
+
     try:
         n_updates = 0
         while True:
