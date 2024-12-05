@@ -303,7 +303,7 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
     else:
         portfolio_prev_usd = Decimal(0)
 
-    updates = interval_s  # One update per second until it's time to update balance
+    updates = interval_s  # Keep updating prices until time interval expires
     sent = False
     while updates > 0:
         start = time.perf_counter()

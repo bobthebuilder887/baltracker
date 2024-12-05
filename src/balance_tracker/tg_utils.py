@@ -62,6 +62,11 @@ class TGMsgBot:
             time.sleep(10)
             return self.send_msg(msg, save_id)
 
+        if resp.status_code in (500, 501, 502, 503):
+            logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
+            time.sleep(10)
+            return self.send_msg(msg, save_id)
+
         resp.raise_for_status()
 
         if save_id:
@@ -85,6 +90,11 @@ class TGMsgBot:
 
         # Send message
         resp = requests.post(url=self._edit_url, params=self.params)
+        if resp.status_code in (500, 501, 502, 503):
+            logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
+            time.sleep(10)
+            return self.edit_last_msg(msg)
+
         resp.raise_for_status()
 
         return resp
