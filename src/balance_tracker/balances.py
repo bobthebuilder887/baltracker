@@ -4,10 +4,12 @@ import datetime
 import json
 import logging
 import os
+import signal
 import time
 from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
+from types import FrameType
 from typing import Literal, Sequence
 
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_and_set_price_info, get_balance_update
@@ -17,6 +19,14 @@ from balance_tracker.tg_utils import TelegramLogHandler, TGMsgBot
 TEST_MODE = False
 
 logger = logging.getLogger(__name__)
+
+
+class SigTerm(SystemExit):
+    pass
+
+
+def term_cb(signal: int, frame: FrameType) -> None:
+    raise SigTerm(1)
 
 
 def mcap_str(mcap: Decimal) -> str:
@@ -392,7 +402,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     NATIVE_BAL_PATH = Path(cfg.general.data_path) / ".native_balances.json"
 
     logger.info(f"Recording portfolio every {INTERVAL_S} seconds")
-
+    signal.signal(signal.SIGTERM, term_cb)
     try:
         n_updates = 0
         while True:
@@ -400,7 +410,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             cfg.general.verbose = args.verbose if args.verbose else cfg.general.verbose
             track_balances(cfg, INTERVAL_S, tg_bot)
             n_updates += 1
-            # reload native eth balances roughly every 6 updates
+            # reload native eth balances roughly every hour
             if not TEST_MODE and n_updates == 6:
                 os.remove(NATIVE_BAL_PATH)
                 n_updates = 0
