@@ -11,6 +11,7 @@
     "moralis_api_key": "your_key"},
   "telegram": {
     "bot_token": "your_token", 
+    "log_bot_token": "your_token", 
     "chat_id": 000000, 
     "send_msg": true
   },
