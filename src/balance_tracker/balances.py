@@ -411,6 +411,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         pass
     finally:
         logger.info("Bot has been shut down")
+        while tg_bot and tg_bot._message_queue:
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":
