@@ -1,6 +1,9 @@
 # Balance Tracker
 
-Tools for tracking crypto wallet balances
+Tools for tracking crypto wallet balances.
+
+- Updates price data roughly every 3 seconds
+- Updates balances roughly every 5 minutes
 
 ## Requirements
 
