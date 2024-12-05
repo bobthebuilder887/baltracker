@@ -28,16 +28,20 @@ class TGMsgBot:
 
         self._message_queue = []
 
+    @property
+    def message_queue(self) -> list:
+        return self._message_queue
+
     def send_forever(self):
         def run():
             while True:
                 for message, kwargs in self._message_queue:
                     resp = message(**kwargs)
                     if isinstance(resp, requests.Response):
-                        time.sleep(max(1.5 - resp.elapsed.total_seconds(), 0))
+                        time.sleep(1.5)
 
                 self._message_queue.clear()
-                time.sleep(0.5)
+                time.sleep(1)
 
         self.thread = threading.Thread(target=run, daemon=True)
         self.thread.start()
