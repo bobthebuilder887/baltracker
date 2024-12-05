@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/baltracker
+ExecStopPost=/bin/sleep 10
 Restart=always
-RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
