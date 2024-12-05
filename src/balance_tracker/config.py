@@ -26,6 +26,7 @@ class Keys(NamedTuple):
 
 class TgConfig(NamedTuple):
     bot_token: str
+    log_bot_token: str
     chat_id: int
     send_msg: bool
 

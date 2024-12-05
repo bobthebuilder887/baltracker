@@ -330,7 +330,8 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
 
         # Print message
         if cfg.general.verbose:
-            print(msg)
+            print("\x1b[2J\x1b[H", end="")
+            print(msg.replace("*", ""))
 
         if tg_bot and not sent:
             tg_bot.schedule_send_msg(msg=msg)
@@ -385,12 +386,18 @@ def main(argv: Sequence[str] | None = None) -> None:
             chat_id=str(cfg.telegram.chat_id),
         )
 
+        log_bot = TGMsgBot(
+            bot_token=cfg.telegram.log_bot_token,
+            chat_id=str(cfg.telegram.chat_id),
+        )
+
         tg_handler = TelegramLogHandler(
-            tg_bot=tg_bot,
+            tg_bot=log_bot,
             level=logging.INFO,
         )
 
         tg_bot.send_forever()
+        log_bot.send_forever()
 
         logger.addHandler(tg_handler)
         m = "Sending messages to Telegram. To disable, set send_msg to false in config.json and restart the script"
@@ -403,7 +410,6 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     logger.info(f"Recording portfolio every {INTERVAL_S} seconds")
     signal.signal(signal.SIGTERM, term_cb)
-    signal.signal(signal.SIGTERM, term_cb)
     signal.signal(signal.SIGINT, term_cb)
     signal.signal(signal.SIGHUP, term_cb)
 
@@ -414,8 +420,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             cfg.general.verbose = args.verbose if args.verbose else cfg.general.verbose
             track_balances(cfg, INTERVAL_S, tg_bot)
             n_updates += 1
-            # reload native eth balances roughly every hour
-            if not TEST_MODE and n_updates == 6:
+            # reload native eth balances roughly every 2 hours (in some instances can fix a balance mis-reading)
+            if not TEST_MODE and n_updates == 12:
                 os.remove(NATIVE_BAL_PATH)
                 n_updates = 0
 
@@ -425,7 +431,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         pass
     finally:
         logger.info("Bot has been shut down")
-        while tg_bot and tg_bot._message_queue:
+        while tg_bot and tg_bot._message_queue and log_bot and log_bot._message_queue:
             time.sleep(0.5)
 
 
