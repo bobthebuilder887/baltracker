@@ -20,6 +20,7 @@ class TGMsgBot:
     session: requests.Session = dataclasses.field(default_factory=requests.Session)
     params: dict = dataclasses.field(default_factory=dict)
     msg_id: int = 0
+    is_sending_forever: bool = False
 
     def __post_init__(self) -> None:
         self.params["parse_mode"] = "markdown"
@@ -34,8 +35,10 @@ class TGMsgBot:
         return self._message_queue
 
     def send_forever(self):
+        self.is_sending_forever = True
+
         def run():
-            while True:
+            while self.is_sending_forever or self._message_queue:
                 for message, kwargs in self._message_queue:
                     resp = message(**kwargs)
                     if isinstance(resp, requests.Response):
