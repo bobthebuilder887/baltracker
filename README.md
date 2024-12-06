@@ -60,4 +60,4 @@ cd ~ && git clone https://github.com/bobthebuilder887/baltracker && cd baltracke
 
 - [ ] Re-add support for Aptos
 - [ ] Add EVM NFT support (Moralis)
-- [ ] Make the prices refresh faster (inbetween balance updates)
+- [x] Make the prices refresh faster (inbetween balance updates)
