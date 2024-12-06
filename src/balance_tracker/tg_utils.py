@@ -1,4 +1,5 @@
 import dataclasses
+import json
 import logging
 import threading
 import time
@@ -57,7 +58,7 @@ class TGMsgBot:
         if "message_id" in self.params:
             del self.params["message_id"]
         self.params["text"] = msg
-
+        self.params["link_preview_options"] = json.dumps({"is_disabled": True})
         # Send message
         resp = requests.post(url=self._send_url, params=self.params)
 
@@ -89,7 +90,6 @@ class TGMsgBot:
 
         # Prepare params
         self.params["message_id"] = self.msg_id
-        # self.params["text"] = _escape_markdown(msg)
         self.params["text"] = msg
 
         # Send message
