@@ -39,13 +39,13 @@ class TGMsgBot:
 
         def run():
             while self.is_sending_forever or self._message_queue:
-                for message, kwargs in self._message_queue:
+                if self._message_queue:
+                    message, kwargs = self._message_queue.pop(0)
                     resp = message(**kwargs)
                     if isinstance(resp, requests.Response):
                         time.sleep(1.5)
-
-                self._message_queue.clear()
-                time.sleep(1)
+                else:
+                    time.sleep(0.5)
 
         self.thread = threading.Thread(target=run, daemon=True)
         self.thread.start()
@@ -66,12 +66,14 @@ class TGMsgBot:
         resp = requests.post(url=self._send_url, params=self.params)
 
         if resp.status_code == 429:
-            logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.send_msg(msg, save_id)
 
         elif resp.status_code in (500, 501, 502, 503):
-            logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.send_msg(msg, save_id)
 
@@ -98,12 +100,14 @@ class TGMsgBot:
         # Send message
         resp = requests.post(url=self._edit_url, params=self.params)
         if resp.status_code == 429:
-            logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.edit_last_msg(msg)
 
         elif resp.status_code in (500, 501, 502, 503):
-            logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.edit_last_msg(msg)
 

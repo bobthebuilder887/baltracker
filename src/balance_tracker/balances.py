@@ -441,17 +441,23 @@ def main(argv: Sequence[str] | None = None) -> None:
         pass
     finally:
         logger.info("Bot is being shut down")
+        time.sleep(1)
         if tg_bot is not None:
-            tg_bot.send_forever = False
+            tg_bot.is_sending_forever = False
+            logger.info(f"Sending last tg messages. Queue size: {len(tg_bot.message_queue)}")
+            time.sleep(1)
             while tg_bot and tg_bot.message_queue:
-                time.sleep(0.5)
+                time.sleep(1)
             tg_bot.thread.join()
 
-        logger.info("Bot is shut down")
+        time.sleep(1)
         if log_bot is not None:
-            log_bot.send_forever = False
+            log_bot.is_sending_forever = False
+            logger.info(f"Sending last log messages. Queue size: {len(log_bot.message_queue)}")
+            time.sleep(1)
+            logger.info("Bot is shut down")
             while log_bot and log_bot.message_queue:
-                time.sleep(0.5)
+                time.sleep(1)
             log_bot.thread.join()
 
 
