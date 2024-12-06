@@ -469,7 +469,7 @@ def get_balance_update(
 
         return balances
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(thread_name_prefix="api_req") as executor:
         sui_balances_future = executor.submit(sui_req)
         evm_prices_future = executor.submit(gecko_req)
         token_balances_future = executor.submit(balances_req)
