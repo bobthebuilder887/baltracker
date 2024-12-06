@@ -94,7 +94,7 @@ class BalanceUpdate:
                 )
                 self.price_change_pct = 100 * (self.new.price - self.old.price) / self.old.price
 
-    def line_str(self, hide_balance: bool = False) -> tuple[str, str]:
+    def line_str(self, hide_balance: bool = False, add_links=True) -> tuple[str, str]:
         if not self.new:
             return "", ""
 
@@ -115,6 +115,9 @@ class BalanceUpdate:
 
         # Keep the symbol a certain size
         symbol = self.new.symbol if len(self.new.symbol) < 13 else f"{self.new.symbol[:10]}..."
+        if add_links:
+            symbol = f"[{symbol}]({self.new.link})" if self.new.link else symbol
+
         mcap_fmt = mcap_str(self.new.market_cap)
         mcap = f"({mcap_fmt})" if self.new.market_cap != 0 else ""
         chain = self.new.chain
@@ -127,7 +130,10 @@ class BalanceUpdate:
             chg_str = ""
 
         if chg_str:
-            line_str = f"*{emoji} {symbol} {mcap} | {value}{chg_str}*"
+            if not self.new.link:
+                line_str = f"*{emoji} {symbol} {mcap} | {value}{chg_str}*"
+            else:
+                line_str = f"*{emoji} *{symbol}* {mcap} | {value}{chg_str}*"
         else:
             line_str = f"{emoji} {symbol} {mcap} | {value}{chg_str}"
 
@@ -252,7 +258,11 @@ def gen_bal_update(
 
     msg = []
     for update in updates:
-        chain, line_str = update.line_str(hide_balance=cfg.general.hide_balances)
+        add_links = True if not cfg.general.verbose else False
+        chain, line_str = update.line_str(
+            hide_balance=cfg.general.hide_balances,
+            add_links=add_links,
+        )
 
         if not portfolio_prev_usd:
             pass
@@ -404,7 +414,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         logger.warning(m)
     else:
         tg_bot = None
-
+        log_bot = None
     INTERVAL_S = args.time_interval if args.time_interval > 0 else cfg.general.time_interval
     NATIVE_BAL_PATH = Path(cfg.general.data_path) / ".native_balances.json"
 
@@ -430,9 +440,19 @@ def main(argv: Sequence[str] | None = None) -> None:
     except KeyboardInterrupt:
         pass
     finally:
-        logger.info("Bot has been shut down")
-        while tg_bot and tg_bot.message_queue and log_bot and log_bot.message_queue:
-            time.sleep(0.5)
+        logger.info("Bot is being shut down")
+        if tg_bot is not None:
+            tg_bot.send_forever = False
+            while tg_bot and tg_bot.message_queue:
+                time.sleep(0.5)
+            tg_bot.thread.join()
+
+        logger.info("Bot is shut down")
+        if log_bot is not None:
+            log_bot.send_forever = False
+            while log_bot and log_bot.message_queue:
+                time.sleep(0.5)
+            log_bot.thread.join()
 
 
 if __name__ == "__main__":
