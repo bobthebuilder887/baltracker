@@ -34,7 +34,7 @@ def plot_data(
         ylabel = "% returns"
         data = calc_returns(data)
     else:
-        title = "Portfolio USD value over 5min intervals"
+        title = f"Portfolio USD value over {data.index.freqstr} intervals"
         ylabel = "USD"
 
     if time_interval is not None:
