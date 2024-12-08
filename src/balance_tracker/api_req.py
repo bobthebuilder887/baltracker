@@ -18,9 +18,6 @@ WalletAddress = str
 WalletBalances = dict[WalletAddress, Decimal]
 
 
-# TODO: rewrite in a way that maximizes update throughput and acurracy
-# - [ ] Each request should be handled in a separate thread in perpetuity at the maximum possible rate
-
 logger = logging.getLogger(__name__)
 
 
