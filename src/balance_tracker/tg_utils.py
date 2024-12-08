@@ -35,17 +35,22 @@ class TGMsgBot:
         return self._message_queue
 
     def send_forever(self):
-        self.is_sending_forever = True
-
         def run():
-            while self.is_sending_forever or self._message_queue:
-                if self._message_queue:
-                    message, kwargs = self._message_queue.pop(0)
-                    resp = message(**kwargs)
-                    if isinstance(resp, requests.Response):
-                        time.sleep(1.5)
-                else:
-                    time.sleep(0.5)
+            self.is_sending_forever = True
+            try:
+                while self.is_sending_forever or self._message_queue:
+                    if self._message_queue:
+                        message, kwargs = self._message_queue.pop(0)
+                        resp = message(**kwargs)
+                        if isinstance(resp, requests.Response):
+                            time.sleep(1.5)
+                    else:
+                        time.sleep(0.5)
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                raise
+            finally:
+                self.is_sending_forever = False
 
         self.thread = threading.Thread(target=run, daemon=True)
         self.thread.start()

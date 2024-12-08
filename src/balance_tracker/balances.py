@@ -448,6 +448,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 os.remove(NATIVE_BAL_PATH)
                 n_updates = 0
 
+            if log_bot and not log_bot.is_sending_forever:
+                log_bot.send_forever()
+
+            if tg_bot and not tg_bot.is_sending_forever:
+                tg_bot._message_queue = []
+                tg_bot.send_forever()
+
     except Exception as e:
         logger.error(e, exc_info=True)
     except KeyboardInterrupt:
