@@ -30,6 +30,7 @@ class TokenInfo:
     balances: WalletBalances
     price: Decimal = Decimal(0)
     liquidity: Decimal = Decimal(0)
+    dex: str = ""
     market_cap: Decimal = Decimal(0)
     link: str = ""
 
@@ -209,7 +210,6 @@ def get_native_change_evm(
 
 def moralis_get_req(session: requests.Session, url: str, params: dict[str, str]) -> dict:
     resp = session.get(url, params=params)
-    # TODO: go oer the docs and see what to do for each error case
     if resp.status_code == 429:
         time.sleep(60)
         return moralis_get_req(session, url, params)
@@ -402,6 +402,8 @@ def find_tokens(token_contracts, pair_info) -> tuple[dict, set]:
             market_cap = pair.get("marketCap", Decimal(0))
             link = pair.get("url", "")
 
+            dex = f"{pair.get('dexName', '')} ({pair.get('labels', [])})"
+
             if not price:
                 not_found.add(address)
                 continue
@@ -414,6 +416,7 @@ def find_tokens(token_contracts, pair_info) -> tuple[dict, set]:
                 "price": Decimal(price),
                 "liquidity": Decimal(liquidity),
                 "market_cap": Decimal(market_cap),
+                "dex": dex,
                 "link": link,
             }
         else:
@@ -503,5 +506,6 @@ def get_and_set_price_info(token_contracts, unsupported_balances, all_balances):
             all_balances[token].liquidity = price_info["liquidity"]
             all_balances[token].market_cap = price_info["market_cap"]
             all_balances[token].link = price_info["link"]
+            all_balances[token].dex = price_info["dex"]
 
     return all_balances

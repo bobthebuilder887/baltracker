@@ -184,12 +184,24 @@ def gen_bal_update(
         all_balances=all_balances,
     )
 
+    # Correct for faulty market data from the Dexscreener API
     for address, info in balance_update.items():
-        if info.price != 0:
+        # If missing price take the previous balance update
+        # This means that it likely has no trading volume past 24h
+        if info.price == 0:
+            info.price = previous_balance.get(address, info).price
+            info.liquidity = previous_balance.get(address, info).liquidity
+            info.market_cap = previous_balance.get(address, info).market_cap
             continue
-        info.price = previous_balance.get(address, info).price
-        info.liquidity = previous_balance.get(address, info).liquidity
-        info.market_cap = previous_balance.get(address, info).market_cap
+
+        if not (prev_info := previous_balance.get(address, False)):
+            continue
+
+        if prev_info.dex != info.dex and prev_info.liquidity > info.liquidity:
+            info.price = prev_info.price
+            info.liquidity = prev_info.liquidity
+            info.market_cap = prev_info.market_cap
+            info.dex = prev_info.dex
 
     portfolio_usd = sum(info.real_value for info in balance_update.values())
 
