@@ -220,7 +220,7 @@ def gen_bal_update(
         chg = value - value_old
         sign = "+" if round(chg, 2) > 0 else ""
         chg_str = f" ({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
-        chain_str = f"\n*⛓️ [{chain.upper()}] -- [${value:,.2f}{chg_str}]*"
+        chain_str = f"*⛓️ [{chain.upper()}] -- [${value:,.2f}{chg_str}]*"
         if not portfolio_prev_usd:
             pass
         elif chg / portfolio_prev_usd > 0.01:
@@ -243,8 +243,8 @@ def gen_bal_update(
     else:
         emoji = "🟢"
 
-    ts_str = datetime.datetime.fromtimestamp(time_s).strftime("%y-%m-%d %h:%m")
-    ts_str = f"*{ts_str}: PORTFOLIO UPDATE:*\n-------------"
+    ts_str = datetime.datetime.fromtimestamp(time_s).strftime("%y-%m-%d %H:%M")
+    ts_str = f"*{ts_str} PORTFOLIO UPDATE*"
     portfolio_str = f"*{emoji} ${portfolio_usd:,.2f} ({sign}{portfolio_chg:,.2f})*"
     if cfg.general.hide_balances:
         for c in portfolio_str:
@@ -284,6 +284,7 @@ def gen_bal_update(
             line_str += " ❗️"
 
         if chain_strs[chain] not in msg:
+            msg.append("----------------")
             msg.append(chain_strs[chain])
             msg.append("----------------")
         msg.append(line_str)
