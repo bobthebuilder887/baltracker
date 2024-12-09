@@ -431,7 +431,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         logger.warning(m)
     else:
         tg_bot = None
-        log_bot = None
+        # log_bot = None
     INTERVAL_S = args.time_interval if args.time_interval > 0 else cfg.general.time_interval
     NATIVE_BAL_PATH = Path(cfg.general.data_path) / ".native_balances.json"
 
@@ -467,7 +467,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         logger.info("Bot is being shut down")
         time.sleep(1)
         if tg_bot is not None:
-            tg_bot.schedule_send_msg(msg="Bot is being shutting down!", save_id=False)
+            tg_bot.schedule_send_msg(msg="Bot is being shut down!", save_id=False)
             tg_bot.is_sending_forever = False
             logger.info(f"Sending last tg messages. Queue size: {len(tg_bot.message_queue)}")
             time.sleep(1)
