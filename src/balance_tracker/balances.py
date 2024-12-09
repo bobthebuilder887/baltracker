@@ -14,7 +14,7 @@ from typing import Literal, Sequence
 
 from balance_tracker.api_req import TokenAddress, TokenInfo, get_and_set_price_info, get_balance_update
 from balance_tracker.config import Config
-from balance_tracker.tg_utils import TelegramLogHandler, TGMsgBot
+from balance_tracker.tg_utils import TGMsgBot
 
 TEST_MODE = False
 
@@ -409,20 +409,24 @@ def main(argv: Sequence[str] | None = None) -> None:
             chat_id=str(cfg.telegram.chat_id),
         )
 
-        log_bot = TGMsgBot(
-            bot_token=cfg.telegram.log_bot_token,
-            chat_id=str(cfg.telegram.chat_id),
-        )
-
-        tg_handler = TelegramLogHandler(
-            tg_bot=log_bot,
-            level=logging.INFO,
-        )
+        # log_bot = TGMsgBot(
+        #     bot_token=cfg.telegram.log_bot_token,
+        #     chat_id=str(cfg.telegram.chat_id),
+        # )
+        #
+        # tg_handler = TelegramLogHandler(
+        #     tg_bot=log_bot,
+        #     level=logging.INFO,
+        # )
 
         tg_bot.send_forever()
-        log_bot.send_forever()
+        # log_bot.send_forever()
 
-        logger.addHandler(tg_handler)
+        tg_bot.schedule_send_msg(
+            msg="Bot has been restarted. If the restarts persit, check logs",
+            save_id=False,
+        )
+        # logger.addHandler(tg_handler)
         m = "Sending messages to Telegram. To disable, set send_msg to false in config.json and restart the script"
         logger.warning(m)
     else:
@@ -448,8 +452,8 @@ def main(argv: Sequence[str] | None = None) -> None:
                 os.remove(NATIVE_BAL_PATH)
                 n_updates = 0
 
-            if log_bot and not log_bot.is_sending_forever:
-                log_bot.send_forever()
+            # if log_bot and not log_bot.is_sending_forever:
+            #     log_bot.send_forever()
 
             if tg_bot and not tg_bot.is_sending_forever:
                 tg_bot._message_queue = []
@@ -463,6 +467,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         logger.info("Bot is being shut down")
         time.sleep(1)
         if tg_bot is not None:
+            tg_bot.schedule_send_msg(msg="Bot is being shutting down!", save_id=False)
             tg_bot.is_sending_forever = False
             logger.info(f"Sending last tg messages. Queue size: {len(tg_bot.message_queue)}")
             time.sleep(1)
@@ -471,14 +476,13 @@ def main(argv: Sequence[str] | None = None) -> None:
             tg_bot.thread.join()
 
         time.sleep(1)
-        if log_bot is not None:
-            log_bot.is_sending_forever = False
-            logger.info(f"Sending last log messages. Queue size: {len(log_bot.message_queue)}")
-            time.sleep(1)
-            logger.info("Bot is shut down")
-            while log_bot and log_bot.message_queue:
-                time.sleep(1)
-            log_bot.thread.join()
+        # if log_bot is not None:
+        #     log_bot.is_sending_forever = False
+        #     logger.info(f"Sending last log messages. Queue size: {len(log_bot.message_queue)}")
+        #     time.sleep(1)
+        logger.info("Bot is shut down")
+        # while log_bot and log_bot.message_queue:
+        #     time.sleep(1)
 
 
 if __name__ == "__main__":
