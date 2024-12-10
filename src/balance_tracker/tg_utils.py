@@ -45,7 +45,7 @@ class TGMsgBot:
                         if isinstance(resp, requests.Response):
                             time.sleep(1.5)
                     else:
-                        time.sleep(0.5)
+                        time.sleep(1.5)
             except Exception as e:
                 logger.error(e, exc_info=True)
                 raise
