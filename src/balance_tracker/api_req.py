@@ -13,9 +13,9 @@ from typing import Iterable
 
 import requests
 
-
-
 logger = logging.getLogger(__name__)
+
+INTERNAL = (500, 501, 502, 503, 504)
 
 
 @dataclasses.dataclass
@@ -57,17 +57,16 @@ class TokenInfo:
         return info_dict
 
 
-
-
 def handle_sui_req(req) -> requests.Response:
     resp = req()
 
-    if resp.status_code in (500, 501, 502, 503):
+    if resp.status_code in INTERNAL:
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_sui_req(req)
     elif resp.status_code == 429:
-        logger.warning(f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_sui_req(req)
     else:
@@ -130,10 +129,11 @@ def get_gecko_price(ticker: str) -> Decimal:
     )
 
     if resp.status_code == 429:
-        logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return get_gecko_price(ticker)
-    if resp.status_code in (500, 501, 502, 503):
+    if resp.status_code in INTERNAL:
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
     else:
@@ -145,7 +145,7 @@ def get_gecko_price(ticker: str) -> Decimal:
 def handle_moralis_req(req) -> dict:
     resp = req()
 
-    if resp.status_code in (500, 501, 502, 503):
+    if resp.status_code in INTERNAL:
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_moralis_req(req)
@@ -326,12 +326,13 @@ def get_token_balances(
 
 def handle_dex_req(req) -> dict:
     resp = req()
-    if resp.status_code in (500, 501, 502, 503):
+    if resp.status_code in INTERNAL:
         logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_dex_req(req)
     elif resp.status_code == 429:
-        logger.warning(f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
+        logger.warning(
+            f"{resp.url[10:]}...\nRATE LIMIT ERROR:\n{resp.text}\nRetry after 60 seconds")
         time.sleep(60)
         return handle_dex_req(req)
     else:
@@ -377,6 +378,7 @@ def find_token(pair_info: list[dict], address: str) -> dict:
     # get the pair with best liquidity, if liq reading faulty, use 24h volume
     max_liquidity = max(filter_list, key=lambda x: get_liquidity_usd(x))
     if get_liquidity_usd(max_liquidity) == Decimal(0):
+        # TODO: see if this is correct
         max_volume = max(filter_list, key=lambda x: get_volume_usd(x))
         best_pair = max_volume
     else:
@@ -396,9 +398,8 @@ def find_tokens(token_contracts, pair_info) -> tuple[dict, set]:
             price = pair.get("priceUsd", Decimal(0))
             liquidity = pair.get("liquidity", {}).get("usd", Decimal(0))
             market_cap = pair.get("marketCap", Decimal(0))
-            link = pair.get("url", "")
-
             dex = f"{pair.get('dexName', '')} ({pair.get('labels', [])})"
+            link = pair.get("url", "")
 
             if not price:
                 not_found.add(address)
