@@ -13,9 +13,6 @@ from typing import Iterable
 
 import requests
 
-TokenAddress = str
-WalletAddress = str
-WalletBalances = dict[WalletAddress, Decimal]
 
 
 logger = logging.getLogger(__name__)
@@ -23,11 +20,11 @@ logger = logging.getLogger(__name__)
 
 @dataclasses.dataclass
 class TokenInfo:
-    address: TokenAddress
+    address: str
     name: str
     symbol: str
     chain: str
-    balances: WalletBalances
+    balances: dict[str, Decimal]
     price: Decimal = Decimal(0)
     liquidity: Decimal = Decimal(0)
     dex: str = ""
@@ -60,7 +57,6 @@ class TokenInfo:
         return info_dict
 
 
-TokenInfos = dict[TokenAddress, TokenInfo]
 
 
 def handle_sui_req(req) -> requests.Response:
@@ -80,7 +76,7 @@ def handle_sui_req(req) -> requests.Response:
     return resp
 
 
-def get_sui_balances(wallet_address: list[WalletAddress], api_key: str) -> TokenInfos:
+def get_sui_balances(wallet_address: list[str], api_key: str) -> dict[str, TokenInfo]:
     payload = {"objectTypes": ["coin", "nft"]}
     headers = {
         "accept": "*/*",
@@ -160,7 +156,7 @@ def handle_moralis_req(req) -> dict:
 
 
 def get_native_change_evm(
-    evm_wallets: list[WalletAddress],
+    evm_wallets: list[str],
     evm_chains: list[str],
     moralis_api_key: str,
     native_bal_path: Path,
@@ -224,8 +220,8 @@ def get_token_balances(
     evm_chains: list[str],
     moralis_api_key: str,
     native_bal_path: Path,
-    old_balances: TokenInfos | None = None,
-) -> TokenInfos:
+    old_balances: dict[str, TokenInfo] | None = None,
+) -> dict[str, TokenInfo]:
     old_balances = {} if old_balances is None else deepcopy(old_balances)
     balances = {}
     sol_url = "https://solana-gateway.moralis.io/account/mainnet/{:1}/portfolio"
@@ -344,7 +340,7 @@ def handle_dex_req(req) -> dict:
     return resp.json()
 
 
-def get_token_pair_info(token_contracts: Iterable[TokenAddress]) -> list[dict]:
+def get_token_pair_info(token_contracts: Iterable[str]) -> list[dict]:
     URL, N_MAX = "https://api.dexscreener.com/latest/dex/tokens/", 30
     token_contracts = list(token_contracts)
     random.shuffle(token_contracts)  # Shuffle as query result sometimes differs
@@ -425,7 +421,7 @@ def find_tokens(token_contracts, pair_info) -> tuple[dict, set]:
     return found_info, not_found
 
 
-def get_token_price_info(token_contracts: list[TokenAddress]):
+def get_token_price_info(token_contracts: list[str]):
     pair_info = get_token_pair_info(token_contracts)
     found_info_all, not_found = find_tokens(token_contracts, pair_info)
     n_retries = 3

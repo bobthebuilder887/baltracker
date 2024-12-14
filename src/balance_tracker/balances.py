@@ -12,7 +12,7 @@ from pathlib import Path
 from types import FrameType
 from typing import Literal, Sequence
 
-from balance_tracker.api_req import TokenAddress, TokenInfo, get_and_set_price_info, get_balance_update
+from balance_tracker.api_req import TokenInfo, get_and_set_price_info, get_balance_update
 from balance_tracker.config import Config
 from balance_tracker.tg_utils import TGMsgBot
 
@@ -145,13 +145,13 @@ class BalanceUpdate:
         return chain, line_str
 
 
-def save_balances(balances: dict[TokenAddress, TokenInfo], path: Path) -> None:
+def save_balances(balances: dict[str, TokenInfo], path: Path) -> None:
     balances_json = {k: v.to_json_dict() for k, v in balances.items()}
     with open(path, "w") as f:
         json.dump(balances_json, f)
 
 
-def load_previous_balance(path: Path) -> dict[TokenAddress, TokenInfo]:
+def load_previous_balance(path: Path) -> dict[str, TokenInfo]:
     if not path.exists():
         return {}
 

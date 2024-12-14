@@ -4,11 +4,9 @@ from decimal import Decimal
 from pathlib import Path
 from typing import NamedTuple, Self
 
-from balance_tracker.api_req import WalletAddress
-
 
 class WalletInfo(NamedTuple):
-    address: WalletAddress
+    address: str
     name: str
     strategy: str
 
@@ -45,10 +43,10 @@ class Config(NamedTuple):
     keys: Keys
     general: General
     telegram: TgConfig
-    evm_wallets: list[WalletAddress] = dataclasses.field(default_factory=list)
-    sol_wallets: list[WalletAddress] = dataclasses.field(default_factory=list)
-    sui_wallets: list[WalletAddress] = dataclasses.field(default_factory=list)
-    apt_wallets: list[WalletAddress] = dataclasses.field(default_factory=list)
+    evm_wallets: list[str] = dataclasses.field(default_factory=list)
+    sol_wallets: list[str] = dataclasses.field(default_factory=list)
+    sui_wallets: list[str] = dataclasses.field(default_factory=list)
+    apt_wallets: list[str] = dataclasses.field(default_factory=list)
     evm_info: dict[str, EVMInfo] = dataclasses.field(default_factory=dict)
     unsupported_balances: dict[str, Decimal] = dataclasses.field(default_factory=dict)
 
