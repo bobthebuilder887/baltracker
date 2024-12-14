@@ -363,9 +363,18 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
             tg_bot.schedule_edit_msg(msg=msg)
         else:
             pass
+
         end = time.perf_counter()
         time_diff = end - start
         updates -= time_diff
+        # Make sure the time interval is met with telegram messages
+        if time_diff < 1.5:
+            remainder = 1.5 - time_diff
+            time.sleep(remainder)
+            updates -= remainder
+        else:
+            time.sleep(0.5)
+            updates -= 0.5
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -409,29 +418,16 @@ def main(argv: Sequence[str] | None = None) -> None:
             chat_id=str(cfg.telegram.chat_id),
         )
 
-        # log_bot = TGMsgBot(
-        #     bot_token=cfg.telegram.log_bot_token,
-        #     chat_id=str(cfg.telegram.chat_id),
-        # )
-        #
-        # tg_handler = TelegramLogHandler(
-        #     tg_bot=log_bot,
-        #     level=logging.INFO,
-        # )
-
         tg_bot.send_forever()
-        # log_bot.send_forever()
 
         tg_bot.schedule_send_msg(
             msg="Bot has been restarted. If the restarts persit, check logs",
             save_id=False,
         )
-        # logger.addHandler(tg_handler)
         m = "Sending messages to Telegram. To disable, set send_msg to false in config.json and restart the script"
         logger.warning(m)
     else:
         tg_bot = None
-        # log_bot = None
     INTERVAL_S = args.time_interval if args.time_interval > 0 else cfg.general.time_interval
     NATIVE_BAL_PATH = Path(cfg.general.data_path) / ".native_balances.json"
 
@@ -451,9 +447,6 @@ def main(argv: Sequence[str] | None = None) -> None:
             if not TEST_MODE and n_updates == 12:
                 os.remove(NATIVE_BAL_PATH)
                 n_updates = 0
-
-            # if log_bot and not log_bot.is_sending_forever:
-            #     log_bot.send_forever()
 
             if tg_bot and not tg_bot.is_sending_forever:
                 tg_bot._message_queue = []
