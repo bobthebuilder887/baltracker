@@ -43,9 +43,9 @@ class TGMsgBot:
                         message, kwargs = self._message_queue.pop(0)
                         resp = message(**kwargs)
                         if isinstance(resp, requests.Response):
-                            time.sleep(1.5)
+                            time.sleep(1.8)
                     else:
-                        time.sleep(1.5)
+                        time.sleep(1.8)
             except Exception as e:
                 logger.error(e, exc_info=True)
                 raise
@@ -71,12 +71,14 @@ class TGMsgBot:
         resp = requests.post(url=self._send_url, params=self.params)
 
         if resp.status_code == 429:
-            logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.send_msg(msg, save_id)
 
         elif resp.status_code in (500, 501, 502, 503):
-            logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.send_msg(msg, save_id)
 
@@ -103,12 +105,14 @@ class TGMsgBot:
         # Send message
         resp = requests.post(url=self._edit_url, params=self.params)
         if resp.status_code == 429:
-            logger.warning(f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.edit_last_msg(msg)
 
         elif resp.status_code in (500, 501, 502, 503):
-            logger.warning(f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
+            logger.warning(
+                f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
             return self.edit_last_msg(msg)
 
