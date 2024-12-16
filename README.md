@@ -59,5 +59,6 @@ cd ~ && git clone https://github.com/bobthebuilder887/baltracker && cd baltracke
 ## TODO
 
 - [ ] Re-add support for Aptos
+- [ ] Add some configuration options in the telegram interface as well as some refresh buttons and info on API
 - [ ] Add EVM NFT support (Moralis)
 - [x] Make the prices refresh faster (inbetween balance updates)
