@@ -16,6 +16,7 @@ class MissingMessageId(Exception):
 @dataclasses.dataclass
 class TGMsgBot:
     bot_token: str
+    backup_token: str
     chat_id: str
     session: requests.Session = dataclasses.field(default_factory=requests.Session)
     params: dict = dataclasses.field(default_factory=dict)
@@ -73,10 +74,20 @@ class TGMsgBot:
         if resp.status_code == 429:
             logger.warning(
                 f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
-            time.sleep(10)
-            return self.send_msg(msg, save_id)
 
-        elif resp.status_code in (500, 501, 502, 503):
+            self._message_queue.clear()
+
+            # switch to backup bot
+            if self.bot_token in self._edit_url:
+                self._edit_url = self._edit_url.replace(self.bot_token, self.backup_token)
+                self._send_url = self._send_url.replace(self.bot_token, self.backup_token)
+            else:
+                self._edit_url = self._edit_url.replace(self.backup_token, self.bot_token)
+                self._send_url = self._send_url.replace(self.backup_token, self.bot_token)
+
+            return self.send_msg(msg, save_id=True)
+
+        elif resp.status_code in (500, 501, 502, 503, 504):
             logger.warning(
                 f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)
@@ -107,10 +118,18 @@ class TGMsgBot:
         if resp.status_code == 429:
             logger.warning(
                 f"{resp.url[10:]}...\nRATE LIMITED Response:\n{resp.text}\nRetry after 10 seconds")
-            time.sleep(10)
-            return self.edit_last_msg(msg)
 
-        elif resp.status_code in (500, 501, 502, 503):
+            # switch to backup bot
+            if self.bot_token in self._edit_url:
+                self._edit_url = self._edit_url.replace(self.bot_token, self.backup_token)
+                self._send_url = self._send_url.replace(self.bot_token, self.backup_token)
+            else:
+                self._edit_url = self._edit_url.replace(self.backup_token, self.bot_token)
+                self._send_url = self._send_url.replace(self.backup_token, self.bot_token)
+
+            return self.send_msg(msg, save_id=True)
+
+        elif resp.status_code in (500, 501, 502, 503, 504):
             logger.warning(
                 f"{resp.url[10:]}...\nINTERNAL ERROR:\n{resp.text}\nRetry after 10 seconds")
             time.sleep(10)

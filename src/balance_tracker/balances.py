@@ -417,6 +417,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if cfg.telegram.send_msg:
         tg_bot = TGMsgBot(
             bot_token=cfg.telegram.bot_token,
+            backup_token=cfg.telegram.log_bot_token,
             chat_id=str(cfg.telegram.chat_id),
         )
 
