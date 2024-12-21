@@ -356,7 +356,7 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
         if cfg.general.verbose:
             print("\x1b[2J\x1b[H", end="")
             print(msg.replace("*", ""))
-            print('*' * 20)
+            print("*" * 20)
 
         if tg_bot and not sent:
             tg_bot.schedule_send_msg(msg=msg)
@@ -370,8 +370,8 @@ def track_balances(cfg: Config, interval_s: int, tg_bot: None | TGMsgBot) -> Non
         time_diff = end - start
         updates -= time_diff
         # Make sure the time interval is met with telegram messages
-        if time_diff < 2:
-            remainder = 2 - time_diff
+        if time_diff < 5:
+            remainder = 5 - time_diff
             time.sleep(remainder)
             updates -= remainder
         else:
