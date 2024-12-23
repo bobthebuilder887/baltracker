@@ -417,7 +417,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if cfg.telegram.send_msg:
         tg_bot = TGMsgBot(
             bot_token=cfg.telegram.bot_token,
-            backup_token=cfg.telegram.log_bot_token,
+            backup_token=cfg.telegram.backup_bot_token,
             chat_id=str(cfg.telegram.chat_id),
         )
 
@@ -472,13 +472,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             tg_bot.thread.join()
 
         time.sleep(1)
-        # if log_bot is not None:
-        #     log_bot.is_sending_forever = False
-        #     logger.info(f"Sending last log messages. Queue size: {len(log_bot.message_queue)}")
-        #     time.sleep(1)
         logger.info("Bot is shut down")
-        # while log_bot and log_bot.message_queue:
-        #     time.sleep(1)
 
 
 if __name__ == "__main__":
