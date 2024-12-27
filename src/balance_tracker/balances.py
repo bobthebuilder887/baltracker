@@ -221,6 +221,7 @@ def gen_bal_update(
         sign = "+" if round(chg, 2) > 0 else ""
         chg_str = f" ({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
         chain_str = f"*⛓️ [{chain.upper()}] -- [${value:,.2f}{chg_str}]*"
+        chg = Decimal(chg)
         if not portfolio_prev_usd:
             pass
         elif chg / portfolio_prev_usd > 0.01:
