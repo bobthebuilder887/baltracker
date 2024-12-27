@@ -217,7 +217,7 @@ def gen_bal_update(
     for chain in portfolio_by_chain:
         value = portfolio_by_chain[chain]
         value_old = portfolio_by_chain_old[chain]
-        chg = value - value_old
+        chg = float(value - value_old)
         sign = "+" if round(chg, 2) > 0 else ""
         chg_str = f" ({sign}{chg:,.2f})" if round(abs(chg), 2) > 0 else ""
         chain_str = f"*⛓️ [{chain.upper()}] -- [${value:,.2f}{chg_str}]*"
