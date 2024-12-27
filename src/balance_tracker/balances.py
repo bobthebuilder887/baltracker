@@ -234,7 +234,7 @@ def gen_bal_update(
                     chain_str = chain_str.replace(c, "9")
         chain_strs[chain] = chain_str
 
-    portfolio_chg = portfolio_usd - portfolio_prev_usd
+    portfolio_chg = float(portfolio_usd - portfolio_prev_usd)
     sign = "+" if round(portfolio_chg, 2) > 0 else ""
 
     if round(portfolio_chg, 2) < 0:
