@@ -46,7 +46,7 @@ class TokenInfo:
 
         available_liq = self.liquidity / 2
         slippage = (Decimal(1) - (available_liq - self.value) / available_liq) / 2
-        return max(self.value * (Decimal(1) - slippage), Decimal(0))
+        return max(self.value * (Decimal(1) - slippage), Decimal(0.1))
 
     def to_json_dict(self) -> dict:
         info_dict = dataclasses.asdict(self)
